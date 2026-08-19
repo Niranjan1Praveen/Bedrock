@@ -4,6 +4,7 @@ import { MonoLabel } from "@/components/ui/mono-label";
 import { Pill } from "@/components/ui/pill";
 import { Viz } from "@/components/viz";
 import { ProgressStrip } from "@/components/home/progress-strip";
+import { LeetCodeStats } from "@/components/home/leetcode-stats";
 import {
   getConceptCounts,
   getProblem,
@@ -156,12 +157,16 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Progress */}
+        {/* Progress: what has been revised here, then what has been solved there */}
         <section className="border-line border-t py-16 sm:py-20">
-          <MonoLabel>Your progress</MonoLabel>
+          <MonoLabel>Revised here</MonoLabel>
           <div className="mt-8 max-w-md">
             <ProgressStrip track="sql-50" total={sql50.length} />
           </div>
+        </section>
+
+        <section className="border-line border-t py-16 sm:py-20">
+          <LeetCodeStats />
         </section>
       </Container>
     </>

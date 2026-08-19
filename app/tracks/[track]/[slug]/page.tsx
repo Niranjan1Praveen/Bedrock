@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { Pill } from "@/components/ui/pill";
+import { DifficultyPill, Pill } from "@/components/ui/pill";
 import { DataTable } from "@/components/ui/data-table";
 import { QueryBlock } from "@/components/problem/query-block";
 import { RevealSection } from "@/components/problem/reveal-section";
@@ -55,7 +55,7 @@ export default async function ProblemPage({
       <h1 className="mt-5 max-w-3xl text-3xl sm:text-4xl">{problem.title}</h1>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Pill>{problem.difficulty}</Pill>
+        <DifficultyPill difficulty={problem.difficulty} />
         {problem.concepts.map((c) => (
           <Pill key={c}>{c}</Pill>
         ))}

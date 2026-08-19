@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { ConceptTag } from "@/content/types";
+import type { ConceptTag, Problem } from "@/content/types";
+import { DifficultyPill } from "@/components/ui/pill";
 import { useProgress } from "@/lib/progress";
 
 export interface ProblemSummary {
   id: number;
   slug: string;
   title: string;
-  difficulty: string;
+  difficulty: Problem["difficulty"];
   concepts: ConceptTag[];
   hasVisual: boolean;
 }
@@ -75,8 +76,14 @@ export function ProblemList({
                 </span>
 
                 <span className="min-w-0 flex-1">
-                  <span className="text-ink group-hover:text-ink block truncate text-[15px]">
-                    {p.title}
+                  <span className="flex items-center gap-2.5">
+                    <span className="text-ink group-hover:text-ink truncate text-[15px]">
+                      {p.title}
+                    </span>
+                    <DifficultyPill
+                      difficulty={p.difficulty}
+                      className="shrink-0"
+                    />
                   </span>
                   <span className="mono-label text-ink-subtle mt-1.5 block truncate">
                     {p.concepts.join(" · ")}

@@ -21,6 +21,12 @@
   --color-info: #60a5fa; /* the right-hand table in a join */
   --color-warn: #facc15; /* NULL, gotchas */
 
+  /* Difficulty, matching LeetCode's own coding so the mapping is instantly
+     familiar. These are the only brand colours borrowed from elsewhere. */
+  --color-easy: #00b8a3;
+  --color-medium: #ffb800;
+  --color-hard: #ff375f;
+
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, "Courier New", monospace;
 }
