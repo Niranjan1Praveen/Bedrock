@@ -7,11 +7,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Bedrock",
+    default: "Niranjan Praveen — Bedrock",
     template: "%s — Bedrock",
   },
   description:
-    "Brief, visual reference notes for the patterns worth remembering. Starting with LeetCode's SQL 50.",
+    "Projects and reference notes by Niranjan Praveen, a full-stack and machine learning developer in New Delhi.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

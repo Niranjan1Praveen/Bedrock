@@ -5,7 +5,7 @@ export const TRACKS: Track[] = [
     id: "sql-50",
     title: "SQL 50",
     blurb:
-      "LeetCode's SQL 50 -- joins, aggregation, window functions and the NULL semantics that quietly break queries.",
+      "LeetCode's SQL 50: joins, aggregation, window functions and the NULL semantics that quietly break queries.",
     status: "active",
     total: 50,
   },
@@ -21,7 +21,7 @@ export const TRACKS: Track[] = [
     id: "system-design",
     title: "System Design",
     blurb:
-      "Building blocks and trade-offs -- caching, sharding, consistency models, queues.",
+      "Building blocks and trade-offs: caching, sharding, consistency models, queues.",
     status: "planned",
     total: 0,
   },

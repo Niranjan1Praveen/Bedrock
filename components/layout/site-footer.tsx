@@ -1,26 +1,28 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Logo } from "@/components/ui/logo";
+import { profile } from "@/content/profile";
 
 export function SiteFooter() {
   return (
     <footer className="border-line mt-24 border-t py-10">
-      <Container className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <Container className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-ink flex items-center gap-2.5">
             <Logo className="size-4" />
             <span className="mono-label">Bedrock</span>
           </p>
           <p className="text-ink-subtle mt-3 text-sm">
-            A personal reference for the patterns worth remembering.
+            {profile.name} &middot; {profile.location}
           </p>
         </div>
-        <nav className="flex gap-6">
+
+        <nav className="flex flex-wrap gap-x-6 gap-y-3">
           <Link
-            href="/tracks"
+            href="/projects"
             className="mono-label text-ink-subtle hover:text-ink transition-colors"
           >
-            Tracks
+            Projects
           </Link>
           <Link
             href="/tracks/sql-50"
@@ -28,6 +30,28 @@ export function SiteFooter() {
           >
             SQL 50
           </Link>
+          <a
+            href={profile.links.github}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mono-label text-ink-subtle hover:text-ink transition-colors"
+          >
+            GitHub
+          </a>
+          <a
+            href={profile.links.linkedin}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mono-label text-ink-subtle hover:text-ink transition-colors"
+          >
+            LinkedIn
+          </a>
+          <a
+            href={`mailto:${profile.links.email}`}
+            className="mono-label text-ink-subtle hover:text-ink transition-colors"
+          >
+            Email
+          </a>
         </nav>
       </Container>
     </footer>
