@@ -27,6 +27,10 @@ export default async function AdminPage() {
         <div>
           <MonoLabel>Admin</MonoLabel>
           <h1 className="mt-4 text-3xl">Posts</h1>
+          <p className="text-ink-subtle mt-3 text-sm">
+            Drafts are listed here only. They stay reachable at their own URL
+            while you are signed in.
+          </p>
         </div>
         <Link
           href="/admin/new"

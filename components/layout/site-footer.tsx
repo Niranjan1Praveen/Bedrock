@@ -17,7 +17,7 @@ export function SiteFooter() {
           </p>
         </div>
 
-        <nav className="flex flex-wrap gap-x-6 gap-y-3">
+        <nav className="flex flex-wrap items-start gap-x-6 gap-y-3">
           <Link
             href="/projects"
             className="mono-label text-ink-subtle hover:text-ink transition-colors"
@@ -58,6 +58,12 @@ export function SiteFooter() {
           >
             Email
           </a>
+          <Link
+            href="/login"
+            className="mono-label text-ink-subtle/50 hover:text-ink transition-colors"
+          >
+            Sign in
+          </Link>
         </nav>
       </Container>
     </footer>

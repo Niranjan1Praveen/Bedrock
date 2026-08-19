@@ -18,9 +18,14 @@ const NAV = [
  * decorative icons, and this matches the mono transport controls used on the
  * visualizations. The panel is anchored to the button rather than stretched
  * across the viewport, so one layout serves both phone and desktop.
+ *
+ * The signed-in state is fetched only when the menu is opened, not on page
+ * load. That keeps every public page free of an extra request, and keeps
+ * supabase-js out of the bundle on pages that will never need it.
  */
 export function SiteNav() {
   const [open, setOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -30,6 +35,17 @@ export function SiteNav() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
+
+  useEffect(() => {
+    // Ask once per mount, and only after the menu has actually been opened.
+    if (!open || signedIn !== null) return;
+    const controller = new AbortController();
+    fetch("/api/me", { signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : { signedIn: false }))
+      .then((d: { signedIn: boolean }) => setSignedIn(d.signedIn))
+      .catch(() => setSignedIn(false));
+    return () => controller.abort();
+  }, [open, signedIn]);
 
   return (
     <div className="relative">
@@ -70,6 +86,27 @@ export function SiteNav() {
                 {item.label}
               </Link>
             ))}
+
+            {signedIn && (
+              <>
+                <hr className="border-line my-1.5" />
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className="mono-label text-accent hover:bg-surface-2 block rounded-lg px-3 py-2.5 transition-colors"
+                >
+                  Admin
+                </Link>
+                <form action="/auth/signout" method="post">
+                  <button
+                    type="submit"
+                    className="mono-label text-ink-subtle hover:bg-surface-2 hover:text-ink block w-full rounded-lg px-3 py-2.5 text-left transition-colors"
+                  >
+                    Sign out
+                  </button>
+                </form>
+              </>
+            )}
           </nav>
         </>
       )}

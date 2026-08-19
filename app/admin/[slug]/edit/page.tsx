@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
+import { Pill } from "@/components/ui/pill";
+import { DeletePostButton } from "@/components/admin/delete-post-button";
 import { MarkdownEditor } from "@/components/admin/markdown-editor";
 import { getUser } from "@/lib/auth";
 import { getPostBySlug } from "@/lib/posts";
@@ -25,17 +27,37 @@ export default async function EditPostPage({
 
   return (
     <Container className="py-16 sm:py-20">
-      <div className="flex flex-wrap items-baseline justify-between gap-4">
-        <div>
-          <MonoLabel>Edit</MonoLabel>
-          <h1 className="mt-4 text-3xl">{post.title}</h1>
-        </div>
-        <Link
-          href={`/blog/${post.slug}`}
-          className="mono-label text-ink-subtle hover:text-ink transition-colors"
-        >
-          View &rarr;
+      <nav className="mono-label text-ink-subtle flex items-center gap-2">
+        <Link href="/admin" className="hover:text-ink transition-colors">
+          Posts
         </Link>
+        <span aria-hidden>/</span>
+        <span className="text-ink truncate">{post.slug}</span>
+      </nav>
+
+      <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-3xl">{post.title}</h1>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Pill tone={post.status === "PUBLISHED" ? "accent" : "warn"}>
+              {post.status === "PUBLISHED" ? "Live" : "Draft"}
+            </Pill>
+            <MonoLabel>
+              {post.status === "PUBLISHED"
+                ? "Visible to everyone"
+                : "Visible only to you"}
+            </MonoLabel>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-5">
+          <Link
+            href={`/blog/${post.slug}`}
+            className="mono-label text-ink-subtle hover:text-ink transition-colors"
+          >
+            View &rarr;
+          </Link>
+          <DeletePostButton slug={post.slug} title={post.title} />
+        </div>
       </div>
 
       <div className="mt-12">
