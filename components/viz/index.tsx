@@ -3,6 +3,7 @@ import { FilterFlow } from "./filter-flow";
 import { JoinFlow } from "./join-flow";
 import { SelfJoinFlow } from "./self-join-flow";
 import { GroupByFlow } from "./group-by-flow";
+import { WindowRankFlow } from "./window-rank-flow";
 
 /**
  * Maps a `Visual` onto its flow component.
@@ -37,6 +38,8 @@ export function Viz({
       if (!table) return null;
       return <SelfJoinFlow visual={visual} table={table} />;
     }
+    case "windowRank":
+      return <WindowRankFlow visual={visual} />;
     case "groupBy":
       return <GroupByFlow visual={visual} />;
   }

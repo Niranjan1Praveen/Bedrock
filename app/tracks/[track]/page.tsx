@@ -38,6 +38,7 @@ export default async function TrackPage({
     difficulty: p.difficulty,
     concepts: p.concepts,
     hasVisual: Boolean(p.visual),
+    section: p.section,
   }));
 
   return (

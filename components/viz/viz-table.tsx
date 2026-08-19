@@ -90,7 +90,10 @@ export function VizTable({
               const tone = tones?.[r] ?? "idle";
               return (
                 <motion.div
-                  key={`row-${r}-${row.join("|")}`}
+                  // Keyed by position, not by content: a content key re-keys the
+                  // row whenever a cell changes, which sends it through a full
+                  // exit/enter and briefly renders both copies at once.
+                  key={`row-${r}`}
                   initial={animateRows ? { opacity: 0, y: -6 } : false}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0 }}

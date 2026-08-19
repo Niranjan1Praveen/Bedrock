@@ -14,13 +14,23 @@ export const CONCEPTS = [
   "INNER JOIN",
   "LEFT JOIN",
   "SELF JOIN",
+  "CROSS JOIN",
+  "UNION",
   "GROUP BY",
   "HAVING",
   "AGGREGATE",
+  "WINDOW",
+  "SUBQUERY",
+  "CTE",
+  "CASE",
   "NULL",
-  "ROUND",
+  "STRING",
+  "REGEX",
   "DATE",
+  "ROUND",
   "ORDER BY",
+  "LIMIT",
+  "DELETE",
 ] as const;
 
 export type ConceptTag = (typeof CONCEPTS)[number];
@@ -77,6 +87,19 @@ export type Visual =
       keep: number[];
     }
   | {
+      kind: "windowRank";
+      /** Inline source, since ranking usually runs over a joined projection. */
+      source: Table;
+      /** Column the rows are partitioned by, or omitted for one partition. */
+      partitionBy?: string;
+      /** Column the ranking is ordered by, highest first. */
+      orderBy: string;
+      fn: "RANK" | "DENSE_RANK" | "ROW_NUMBER";
+      as: string;
+      /** Highlight rows at or below this rank, to show the final filter. */
+      keepUpTo?: number;
+    }
+  | {
       kind: "groupBy";
       /**
        * Inline source table rather than a schema reference, because grouping
@@ -116,6 +139,8 @@ export interface Problem {
   walkthrough: WalkthroughStep[];
   /** The mistake actually worth warning about. Omit if there isn't one. */
   gotcha?: string;
+  /** Study-plan section, attached by the track index rather than authored. */
+  section?: string;
   visual?: Visual;
 }
 
