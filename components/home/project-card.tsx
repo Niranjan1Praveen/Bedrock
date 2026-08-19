@@ -16,7 +16,7 @@ export function ProjectCard({
   showRelated?: boolean;
 }) {
   return (
-    <article className="border-line bg-surface flex flex-col rounded-xl border p-6">
+    <article className="border-line flex flex-col rounded-xl border p-6">
       <div className="flex items-baseline justify-between gap-4">
         <h3 className="text-lg">{project.name}</h3>
         <MonoLabel className="shrink-0">{project.year}</MonoLabel>
@@ -35,7 +35,7 @@ export function ProjectCard({
         {project.role}
       </p>
 
-      <ul className="mt-5 flex flex-wrap gap-1.5">
+      <ul className="my-4 flex flex-wrap gap-1.5">
         {project.stack.map((tech) => (
           <li
             key={tech}

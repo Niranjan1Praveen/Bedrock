@@ -27,8 +27,7 @@ export default async function HomePage() {
         </h1>
         <p className="text-ink-muted mt-7 max-w-xl leading-relaxed">
           I build web applications and the machine learning services behind
-          them. Computer science undergraduate at Amity University, Noida. Four
-          of the projects below placed at national hackathons this year.
+          them. Computer science undergraduate at Amity University, Noida.
         </p>
 
         <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
