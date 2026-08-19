@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Bedrock design tokens
+   Values sampled from the getcracked.io computed styles: near-black canvas,
+   1px hairline borders instead of shadows, muted grey body copy, and colour
+   used only where it carries meaning (inside a visualization or a status).
+--------------------------------------------------------------------------- */
+@theme {
+  --color-base: #0a0a0a; /* page canvas */
+  --color-surface: #111111; /* raised card */
+  --color-surface-2: #161616; /* table header, inset panel */
+  --color-line: #262626; /* every hairline rule */
+  --color-line-soft: #1c1c1c; /* internal table rules */
+
+  --color-ink: #fafafa; /* headings, key values */
+  --color-ink-muted: #a1a1a1; /* body copy */
+  --color-ink-subtle: #6b6b6b; /* labels, meta */
+
+  --color-accent: #4ade80; /* matched rows, "revised" */
+  --color-info: #60a5fa; /* the right-hand table in a join */
+  --color-warn: #facc15; /* NULL, gotchas */
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "Courier New", monospace;
+}
+
+/* The mono eyebrow/label treatment. This single detail carries most of the
+   aesthetic, so it lives as a utility rather than being retyped everywhere. */
+@utility mono-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@layer base {
+  html {
+    background-color: var(--color-base);
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-base);
+    color: var(--color-ink-muted);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Headings are weight 400 with tight tracking -- never bold. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-ink);
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background-color: var(--color-ink);
+    color: var(--color-base);
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+
+  /* Wide tables and visualizations scroll inside their own container so the
+     page body never scrolls sideways on mobile. */
+  .scroll-x {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
