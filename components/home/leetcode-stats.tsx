@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { MonoLabel } from "@/components/ui/mono-label";
 import {
   LEETCODE_USERNAME,
-  fetchLeetCodeStats,
+  RateLimitError,
+  loadLeetCodeStats,
   profileUrl,
   relativeTime,
   type DifficultyStat,
@@ -13,7 +14,7 @@ import {
 
 type State =
   | { status: "loading" }
-  | { status: "ok"; stats: Stats }
+  | { status: "ok"; stats: Stats; fetchedAt: number; stale: boolean }
   | { status: "error"; message: string };
 
 const BAR: Record<DifficultyStat["level"], string> = {
@@ -34,31 +35,28 @@ export function LeetCodeStats() {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
-    const controller = new AbortController();
-    // The API sleeps on a free tier and can take a while to wake up; give it
-    // room, but do not leave a spinner running forever if it never answers.
-    const timer = setTimeout(() => controller.abort(), 30_000);
+    let cancelled = false;
 
-    fetchLeetCodeStats(LEETCODE_USERNAME, controller.signal)
-      .then((stats) => setState({ status: "ok", stats }))
+    // force only on an explicit refresh, so mounting never bypasses the cache.
+    loadLeetCodeStats({ force: attempt > 0 })
+      .then(({ stats, fetchedAt, stale }) => {
+        if (!cancelled) setState({ status: "ok", stats, fetchedAt, stale });
+      })
       .catch((err: unknown) => {
-        // A sleeping free-tier instance surfaces as an abort or a bare
-        // TypeError, neither of which says anything useful to a reader.
+        if (cancelled) return;
         const message =
-          err instanceof DOMException && err.name === "AbortError"
-            ? "The stats service is taking too long to respond. It sleeps when idle, so a second attempt usually works."
+          err instanceof RateLimitError
+            ? `Rate limited by the stats API, which allows 120 requests an hour. It should work again in about ${Math.max(1, Math.round(err.retryAfterSeconds / 60))} minutes.`
             : err instanceof TypeError
               ? "Could not reach the stats service."
               : err instanceof Error
                 ? err.message
                 : "Could not load stats.";
         setState({ status: "error", message });
-      })
-      .finally(() => clearTimeout(timer));
+      });
 
     return () => {
-      clearTimeout(timer);
-      controller.abort();
+      cancelled = true;
     };
   }, [attempt]);
 
@@ -66,14 +64,28 @@ export function LeetCodeStats() {
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <MonoLabel>LeetCode</MonoLabel>
-        <a
-          href={profileUrl()}
-          target="_blank"
-          rel="noreferrer noopener"
-          className="mono-label text-ink-subtle hover:text-ink transition-colors"
-        >
-          {LEETCODE_USERNAME} &rarr;
-        </a>
+        <div className="flex items-center gap-4">
+          {state.status === "ok" && (
+            <button
+              type="button"
+              onClick={() => {
+                setState({ status: "loading" });
+                setAttempt((a) => a + 1);
+              }}
+              className="mono-label text-ink-subtle hover:text-ink transition-colors"
+            >
+              Refresh
+            </button>
+          )}
+          <a
+            href={profileUrl()}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mono-label text-ink-subtle hover:text-ink transition-colors"
+          >
+            {LEETCODE_USERNAME} &rarr;
+          </a>
+        </div>
       </div>
 
       <div className="mt-8">
@@ -95,7 +107,17 @@ export function LeetCodeStats() {
           </div>
         )}
 
-        {state.status === "ok" && <Loaded stats={state.stats} />}
+        {state.status === "ok" && (
+          <>
+            <Loaded stats={state.stats} />
+            {state.stale && (
+              <p className="text-ink-subtle mt-8 text-sm">
+                Showing cached numbers from {relativeTime(state.fetchedAt)}. The
+                stats API could not be reached just now.
+              </p>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

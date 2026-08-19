@@ -10,14 +10,23 @@
  *  - baked-in numbers would be stale until the next deploy, which defeats the
  *    point of showing live stats.
  *
- * The endpoint sends `access-control-allow-origin: *`, so no proxy route is
- * needed. If it is asleep or down, the section degrades to a retry prompt and
- * the rest of the page is unaffected.
+ * The upstream allows 120 requests per hour per IP and answers with 429 once
+ * that is spent. Stats like these change a few times a day at most, so the
+ * request is cached three ways to stay far inside that budget:
+ *
+ *  1. a persistent cache with a TTL, so reloads and revisits cost nothing;
+ *  2. an in-flight promise, so React Strict Mode's double-invoked effect and
+ *     any concurrent mounts share a single request;
+ *  3. the last good payload is kept past its TTL, so if the API is rate
+ *     limited, asleep or down, the page shows slightly old numbers instead of
+ *     an error.
  */
 
 export const LEETCODE_USERNAME = "Niranjan1Praveen";
 
 const API = "https://alfa-leetcode-api.onrender.com";
+const CACHE_KEY = "bedrock:leetcode:v1";
+const TTL_MS = 30 * 60 * 1000;
 
 export interface DifficultyStat {
   level: "Easy" | "Medium" | "Hard";
@@ -29,7 +38,7 @@ export interface RecentSolve {
   title: string;
   slug: string;
   lang: string;
-  at: number; // epoch milliseconds
+  at: number;
 }
 
 export interface LeetCodeStats {
@@ -38,6 +47,22 @@ export interface LeetCodeStats {
   ranking: number;
   byDifficulty: DifficultyStat[];
   recent: RecentSolve[];
+}
+
+export interface LoadResult {
+  stats: LeetCodeStats;
+  /** When these numbers were actually retrieved. */
+  fetchedAt: number;
+  /** True when served from cache past its TTL because the API was unreachable. */
+  stale: boolean;
+}
+
+/** Thrown on HTTP 429 so the UI can say how long to wait rather than guess. */
+export class RateLimitError extends Error {
+  constructor(readonly retryAfterSeconds: number) {
+    super("Rate limited by the stats API.");
+    this.name = "RateLimitError";
+  }
 }
 
 interface RawProfile {
@@ -60,8 +85,6 @@ interface RawProfile {
 }
 
 function normalise(raw: RawProfile): LeetCodeStats {
-  // recentSubmissions includes failed attempts and repeats of the same
-  // problem; keep only accepted ones, most recent entry per problem.
   const seen = new Set<string>();
   const recent: RecentSolve[] = [];
   for (const s of raw.recentSubmissions ?? []) {
@@ -88,21 +111,81 @@ function normalise(raw: RawProfile): LeetCodeStats {
   };
 }
 
-export async function fetchLeetCodeStats(
-  username = LEETCODE_USERNAME,
-  signal?: AbortSignal,
-): Promise<LeetCodeStats> {
-  const res = await fetch(`${API}/userProfile/${encodeURIComponent(username)}`, {
-    signal,
-  });
-  if (!res.ok) throw new Error(`LeetCode API returned ${res.status}`);
+interface CacheEntry {
+  fetchedAt: number;
+  stats: LeetCodeStats;
+}
+
+function readCache(): CacheEntry | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const entry = JSON.parse(raw) as CacheEntry;
+    return typeof entry?.fetchedAt === "number" && entry.stats ? entry : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(entry: CacheEntry) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    // Caching is best-effort; a full quota should not break the page.
+  }
+}
+
+/** Shared across concurrent callers so one render never issues two requests. */
+let inFlight: Promise<LeetCodeStats> | null = null;
+
+async function fetchFresh(username: string): Promise<LeetCodeStats> {
+  const res = await fetch(`${API}/userProfile/${encodeURIComponent(username)}`);
+
+  if (res.status === 429) {
+    const header = Number(res.headers.get("retry-after"));
+    throw new RateLimitError(
+      Number.isFinite(header) && header > 0 ? header : 3600,
+    );
+  }
+  if (!res.ok) throw new Error(`Stats API returned ${res.status}`);
 
   const raw = (await res.json()) as RawProfile & { errors?: unknown };
-  // The upstream returns 200 with an `errors` array for unknown users.
   if (raw.errors || typeof raw.totalSolved !== "number") {
     throw new Error(`No profile data for ${username}`);
   }
   return normalise(raw);
+}
+
+export async function loadLeetCodeStats({
+  force = false,
+  username = LEETCODE_USERNAME,
+} = {}): Promise<LoadResult> {
+  const cached = readCache();
+  const fresh = cached && Date.now() - cached.fetchedAt < TTL_MS;
+
+  if (cached && fresh && !force) {
+    return { stats: cached.stats, fetchedAt: cached.fetchedAt, stale: false };
+  }
+
+  inFlight ??= fetchFresh(username).finally(() => {
+    inFlight = null;
+  });
+
+  try {
+    const stats = await inFlight;
+    const fetchedAt = Date.now();
+    writeCache({ fetchedAt, stats });
+    return { stats, fetchedAt, stale: false };
+  } catch (err) {
+    // Old numbers beat no numbers. Only surface the failure if there is
+    // genuinely nothing to show.
+    if (cached) {
+      return { stats: cached.stats, fetchedAt: cached.fetchedAt, stale: true };
+    }
+    throw err;
+  }
 }
 
 export const profileUrl = (username = LEETCODE_USERNAME) =>
