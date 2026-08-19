@@ -25,6 +25,12 @@ export function SiteFooter() {
             Projects
           </Link>
           <Link
+            href="/blog"
+            className="mono-label text-ink-subtle hover:text-ink transition-colors"
+          >
+            Blog
+          </Link>
+          <Link
             href="/tracks/sql-50"
             className="mono-label text-ink-subtle hover:text-ink transition-colors"
           >

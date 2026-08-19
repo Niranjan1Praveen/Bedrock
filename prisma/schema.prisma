@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+// Prisma 7 no longer accepts `url` here. The migration URL lives in
+// prisma.config.ts and the runtime URL is supplied by the driver adapter
+// in lib/prisma.ts.
+datasource db {
+  provider = "postgresql"
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model Post {
+  id      String @id @default(cuid())
+  slug    String @unique
+  title   String
+  /// Shown in the index and used as the meta description.
+  summary String?
+  /// Markdown source. The only stored representation, so changing the
+  /// renderer never leaves old posts stale.
+  content String
+
+  coverImage String?
+
+  status PostStatus @default(DRAFT)
+  /// Set once, on the first publish, and never moved by later edits.
+  publishedAt DateTime?
+  /// Minutes, computed from word count on save.
+  readingTime Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tags Tag[] @relation("PostTags")
+
+  /// Matches the only hot query: published posts, newest first.
+  @@index([status, publishedAt(sort: Desc)])
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[] @relation("PostTags")
+}

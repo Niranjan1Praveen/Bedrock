@@ -9,12 +9,24 @@ import { LeetCodeStats } from "@/components/home/leetcode-stats";
 import { featuredProjects } from "@/content/projects";
 import { hackathons, profile, skills } from "@/content/profile";
 import { getProblem, getProblems, getTracks } from "@/lib/content";
+import { formatDate, getLatestPosts, type PostWithTags } from "@/lib/posts";
+
+/**
+ * Regenerated hourly rather than at build time, because the latest-posts
+ * section reads the database. Everything else on this page is still static
+ * content compiled from `content/`.
+ */
+export const revalidate = 3600;
 
 export default async function HomePage() {
-  const [tracks, sql50, specimen] = await Promise.all([
+  const [tracks, sql50, specimen, posts] = await Promise.all([
     getTracks(),
     getProblems("sql-50"),
     getProblem("sql-50", "replace-employee-id-with-the-unique-identifier"),
+    // The homepage must not depend on the database being awake. A free-plan
+    // Supabase project pauses after a week idle; if that happens the blog
+    // section simply does not render and the rest of the page is unaffected.
+    getLatestPosts(3).catch((): PostWithTags[] => []),
   ]);
 
   return (
@@ -81,6 +93,49 @@ export default async function HomePage() {
             ))}
           </div>
         </section>
+
+        {/* Writing */}
+        {posts.length > 0 && (
+          <section className="border-line border-t py-16 sm:py-20">
+            <div className="flex flex-wrap items-baseline justify-between gap-4">
+              <MonoLabel>Writing</MonoLabel>
+              <Link
+                href="/blog"
+                className="mono-label text-ink-subtle hover:text-ink transition-colors"
+              >
+                All posts &rarr;
+              </Link>
+            </div>
+
+            <ul className="border-line mt-8 border-t">
+              {posts.map((post) => (
+                <li key={post.id} className="border-line border-b">
+                  <Link
+                    href={`/blog/${post.slug}`}
+                    className="group hover:bg-surface flex flex-col gap-2 px-2 py-5 transition-colors sm:flex-row sm:gap-6"
+                  >
+                    <span className="mono-label text-ink-subtle w-36 shrink-0 sm:pt-1">
+                      {formatDate(post.publishedAt)}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="text-ink block truncate">
+                        {post.title}
+                      </span>
+                      {post.summary && (
+                        <span className="text-ink-muted mt-1.5 block text-sm leading-relaxed">
+                          {post.summary}
+                        </span>
+                      )}
+                    </span>
+                    <span className="mono-label text-ink-subtle shrink-0 sm:pt-1">
+                      {post.readingTime} min
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* LeetCode */}
         <section className="border-line border-t py-16 sm:py-20">
@@ -212,8 +267,7 @@ export default async function HomePage() {
                   {profile.education.school}
                 </p>
                 <p className="text-ink-subtle mt-1.5 text-sm">
-                  {profile.education.period} &middot;{" "}
-                  {profile.education.result}
+                  {profile.education.period} &middot; {profile.education.result}
                 </p>
                 <p className="text-ink-subtle mt-4 text-sm leading-relaxed">
                   Coursework: {profile.education.coursework.join(", ")}.
@@ -221,9 +275,7 @@ export default async function HomePage() {
               </div>
 
               <h3 className="mt-12 text-lg">Contact</h3>
-              <p className="text-ink-subtle mt-5 text-sm">
-                {profile.location}
-              </p>
+              <p className="text-ink-subtle mt-5 text-sm">{profile.location}</p>
               <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
                 <a
                   href={`mailto:${profile.links.email}`}
