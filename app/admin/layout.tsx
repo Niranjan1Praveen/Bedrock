@@ -25,8 +25,8 @@ export default async function AdminLayout({
   return (
     <>
       <div className="border-line bg-surface border-b">
-        <Container className="flex h-12 items-center justify-between gap-4">
-          <nav className="flex items-center gap-5">
+        <Container className="flex min-h-12 flex-wrap items-center justify-between gap-x-5 gap-y-2 py-2">
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link
               href="/admin"
               className="mono-label text-ink hover:text-ink-muted transition-colors"
@@ -38,6 +38,12 @@ export default async function AdminLayout({
               className="mono-label text-ink-subtle hover:text-ink transition-colors"
             >
               New post
+            </Link>
+            <Link
+              href="/admin/library"
+              className="mono-label text-ink-subtle hover:text-ink transition-colors"
+            >
+              Library
             </Link>
             <Link
               href="/blog"

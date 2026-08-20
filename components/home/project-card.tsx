@@ -25,7 +25,7 @@ export function ProjectCard({
       <p className="text-ink-muted mt-1.5 text-sm">{project.subtitle}</p>
 
       {project.award && (
-        <p className="mono-label text-accent mt-4">{project.award}</p>
+        <p className="mono-label text-accent mt-4 leading-relaxed">{project.award}</p>
       )}
 
       <p className="text-ink-muted mt-4 text-sm leading-relaxed">

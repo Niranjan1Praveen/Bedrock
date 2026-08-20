@@ -245,7 +245,7 @@ export default async function HomePage() {
                     key={`${h.event}-${h.project}`}
                     className="border-line flex gap-4 border-b py-4"
                   >
-                    <span className="mono-label text-accent w-24 shrink-0 pt-0.5">
+                    <span className="mono-label text-accent w-24 shrink-0 pt-0.5 leading-relaxed">
                       {h.result}
                     </span>
                     <span className="min-w-0">

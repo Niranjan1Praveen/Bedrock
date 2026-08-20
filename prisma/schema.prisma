@@ -48,3 +48,64 @@ model Tag {
   slug  String @unique
   posts Post[] @relation("PostTags")
 }
+
+/// Study material, organised subject -> topic -> document.
+///
+/// Files live in a private Supabase Storage bucket and are never public: the
+/// row stores only the object path, and a short-lived signed URL is minted
+/// server-side for each view.
+model Subject {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  description String?
+  /// Manual ordering; ties break on name.
+  position    Int     @default(0)
+
+  topics    Topic[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Topic {
+  id       String @id @default(cuid())
+  slug     String
+  name     String
+  position Int    @default(0)
+
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  documents Document[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  /// Slugs need only be unique inside their subject.
+  @@unique([subjectId, slug])
+  @@index([subjectId, position])
+}
+
+model Document {
+  id    String @id @default(cuid())
+  slug  String
+  title String
+
+  /// Object key inside the private `library` bucket. Not a URL: there is no
+  /// public URL for these, by design.
+  storagePath String @unique
+  sizeBytes   Int
+  /// Filled in by the browser after the PDF is first opened, when known.
+  pageCount   Int?
+  position    Int    @default(0)
+
+  topicId String
+  topic   Topic  @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  uploadedAt DateTime @default(now())
+  /// auth.users id of whoever uploaded it. Not a foreign key: auth lives in
+  /// another schema that Prisma does not manage.
+  uploadedBy String?
+
+  @@unique([topicId, slug])
+  @@index([topicId, position])
+}

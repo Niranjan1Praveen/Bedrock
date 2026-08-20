@@ -16,5 +16,12 @@ export async function proxy(request: NextRequest) {
  * needs a session, so nothing public is matched.
  */
 export const config = {
-  matcher: ["/admin/:path*", "/login", "/api/posts/:path*", "/api/uploads", "/api/preview"],
+  matcher: [
+    "/admin/:path*",
+    "/login",
+    "/api/posts/:path*",
+    "/api/library/:path*",
+    "/api/uploads",
+    "/api/preview",
+  ],
 };
