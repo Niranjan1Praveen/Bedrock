@@ -107,7 +107,7 @@ export function SubjectCover({
       <img
         src={imageUrl}
         alt=""
-        className={`aspect-[16/6] w-full object-cover ${className}`}
+        className={`aspect-[12/6] w-full object-cover ${className}`}
       />
     );
   }
@@ -120,7 +120,7 @@ export function SubjectCover({
       viewBox="0 0 340 128"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
-      className={`bg-surface-2 aspect-[16/6] w-full ${className}`}
+      className={`bg-surface-2 aspect-[12/6] w-full ${className}`}
     >
       <Pattern seed={seed} variant={variant} />
     </svg>
