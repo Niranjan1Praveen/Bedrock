@@ -28,8 +28,8 @@ export default async function BlogPage() {
   return (
     <Container className="py-16 sm:py-24">
       <MonoLabel>Blog</MonoLabel>
-      <h1 className="mt-4 max-w-2xl text-3xl sm:text-4xl">
-        Notes on things I have built and broken.
+      <h1 className="mt-4 max-w-2xl text-3xl sm:text-4xl leading-snug">
+        Experiences, stories and notes on things I have built and broken.
       </h1>
 
       {tags.length > 0 && (
