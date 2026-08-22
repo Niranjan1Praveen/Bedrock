@@ -8,7 +8,9 @@ import { getUser } from "@/lib/auth";
 import { renderMarkdown } from "@/lib/markdown";
 import { formatDate, getPostBySlug, getPublishedPosts } from "@/lib/posts";
 
-export const revalidate = 3600;
+// 60s, not an hour: see the note in app/blog/page.tsx. Publishing from
+// localhost cannot clear the deployed instance's cache.
+export const revalidate = 60;
 
 /** Published posts are prerendered; a draft falls through to on-demand. */
 export async function generateStaticParams() {

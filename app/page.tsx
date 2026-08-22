@@ -16,7 +16,9 @@ import { formatDate, getLatestPosts, type PostWithTags } from "@/lib/posts";
  * section reads the database. Everything else on this page is still static
  * content compiled from `content/`.
  */
-export const revalidate = 3600;
+// 60s, not an hour: see the note in app/blog/page.tsx. Publishing from
+// localhost cannot clear the deployed instance's cache.
+export const revalidate = 60;
 
 export default async function HomePage() {
   const [tracks, sql50, specimen, posts] = await Promise.all([

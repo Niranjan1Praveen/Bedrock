@@ -11,13 +11,19 @@ export const metadata: Metadata = {
 };
 
 /**
- * Regenerated on a timer and on publish.
+ * Regenerated a minute at a time.
  *
- * Serving from the cache is also what keeps the blog readable if the database
- * is unreachable: the free Supabase plan pauses a project after a week of
- * inactivity, and a cached page does not care.
+ * Publishing from a local dev server calls revalidatePath on *that* server, so
+ * the deployed instance -- a separate Next process with its own cache pointing
+ * at the same database -- never hears about it and keeps serving its cached
+ * copy. An hour of that is too long to look like anything but a bug. A minute
+ * bounds it, and costs one query per page per minute only when somebody asks
+ * for the page.
+ *
+ * Publishing from the deployed admin still revalidates instantly, and is the
+ * better habit; this is the safety net for when it is done from localhost.
  */
-export const revalidate = 3600;
+export const revalidate = 60;
 
 export default async function BlogPage() {
   const [posts, tags] = await Promise.all([
