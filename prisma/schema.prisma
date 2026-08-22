@@ -59,6 +59,9 @@ model Subject {
   slug        String  @unique
   name        String
   description String?
+  /// Uploaded cover. When null the UI draws a deterministic cover from the
+  /// slug instead, so a subject always has one without needing storage.
+  imageUrl    String?
   /// Manual ordering; ties break on name.
   position    Int     @default(0)
 
@@ -106,6 +109,30 @@ model Document {
   /// another schema that Prisma does not manage.
   uploadedBy String?
 
+  progress DocumentProgress[]
+
   @@unique([topicId, slug])
   @@index([topicId, position])
+}
+
+/// One row per user per document they have marked revised.
+///
+/// Progress is private to each account: rows are keyed by the auth user id and
+/// are never read across users, so the three people with logins each keep their
+/// own state. Absence of a row means not revised, which keeps the table small
+/// and makes unmarking a delete rather than a flag flip.
+model DocumentProgress {
+  id String @id @default(cuid())
+
+  /// auth.users id. Not a foreign key, for the same reason as Document.uploadedBy.
+  userId String
+
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  revisedAt DateTime @default(now())
+
+  @@unique([userId, documentId])
+  @@index([userId])
+  @@index([documentId])
 }

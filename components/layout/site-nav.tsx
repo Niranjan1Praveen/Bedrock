@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const NAV = [
@@ -26,14 +26,37 @@ const NAV = [
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const root = useRef<HTMLDivElement>(null);
 
+  /**
+   * Close on Escape, or on any interaction outside the menu.
+   *
+   * This was a full-screen overlay element, which silently did not work: the
+   * header sets `backdrop-blur`, and a backdrop-filter makes its element a
+   * containing block for fixed-position descendants. `fixed inset-0` therefore
+   * resolved against the 56px header rather than the viewport, so the overlay
+   * only ever covered the header strip and clicks on the page body missed it.
+   *
+   * A document-level listener has no such dependency on stacking or layout.
+   * pointerdown rather than click so the menu closes as the press begins, and
+   * capture so it still fires if something inside stops propagation.
+   */
   useEffect(() => {
     if (!open) return;
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const onPointerDown = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false);
+    };
+
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointerDown, true);
+    };
   }, [open]);
 
   useEffect(() => {
@@ -48,7 +71,7 @@ export function SiteNav() {
   }, [open, signedIn]);
 
   return (
-    <div className="relative">
+    <div className="relative" ref={root}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
@@ -66,12 +89,6 @@ export function SiteNav() {
 
       {open && (
         <>
-          {/* Click-away target. Sits under the panel, over the page. */}
-          <div
-            className="fixed inset-0 z-0"
-            aria-hidden="true"
-            onClick={() => setOpen(false)}
-          />
           <nav
             id="site-menu"
             className="border-line bg-surface absolute top-full right-0 z-10 mt-3 w-48 rounded-xl border p-1.5"

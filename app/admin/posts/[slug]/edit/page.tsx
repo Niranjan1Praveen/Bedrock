@@ -18,9 +18,9 @@ export const dynamic = "force-dynamic";
 
 export default async function EditPostPage({
   params,
-}: PageProps<"/admin/[slug]/edit">) {
+}: PageProps<"/admin/posts/[slug]/edit">) {
   const { slug } = await params;
-  if (!(await getUser())) redirect(`/login?next=/admin/${slug}/edit`);
+  if (!(await getUser())) redirect(`/login?next=/admin/posts/${slug}/edit`);
 
   const post = await getPostBySlug(slug, { includeDrafts: true });
   if (!post) notFound();

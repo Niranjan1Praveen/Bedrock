@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { getSubjects } from "@/lib/library";
+import { SubjectCover } from "@/components/library/subject-cover";
+import { ProgressBar } from "@/components/library/progress-bar";
+import { getUser } from "@/lib/auth";
+import { getSubjectsWithProgress } from "@/lib/library";
 
 export const metadata: Metadata = {
   title: "Library",
@@ -12,7 +15,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function LibraryPage() {
-  const subjects = await getSubjects();
+  const user = await getUser();
+  const userId = typeof user?.sub === "string" ? user.sub : "";
+  const subjects = await getSubjectsWithProgress(userId);
 
   return (
     <Container className="py-16 sm:py-20">
@@ -21,8 +26,8 @@ export default async function LibraryPage() {
           <MonoLabel>Library</MonoLabel>
           <h1 className="mt-4 text-3xl">Subjects</h1>
           <p className="text-ink-subtle mt-3 max-w-xl text-sm leading-relaxed">
-            Reference PDFs, read in the browser. Files are private and are
-            served on links that expire.
+            Reference PDFs, read in the browser. Progress is yours alone and is
+            not shared with the other accounts.
           </p>
         </div>
         <Link
@@ -38,23 +43,26 @@ export default async function LibraryPage() {
           Nothing uploaded yet.
         </p>
       ) : (
-        <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {subjects.map((s) => (
             <Link
               key={s.id}
               href={`/admin/library/${s.slug}`}
-              className="border-line hover:bg-surface min-w-0 rounded-xl border p-5 transition-colors"
+              className="border-line hover:bg-surface group min-w-0 overflow-hidden rounded-xl border transition-colors"
             >
-              <h2 className="truncate text-lg">{s.name}</h2>
-              {s.description && (
-                <p className="text-ink-muted mt-2 text-sm leading-relaxed">
-                  {s.description}
+              <SubjectCover slug={s.slug} imageUrl={s.imageUrl} />
+              <div className="border-line border-t p-5">
+                <h2 className="truncate text-lg">{s.name}</h2>
+                <p className="mono-label text-ink-subtle mt-2">
+                  {s.topicCount} topic{s.topicCount === 1 ? "" : "s"} &middot;{" "}
+                  {s.documentCount} file{s.documentCount === 1 ? "" : "s"}
                 </p>
-              )}
-              <p className="mono-label text-ink-subtle mt-5">
-                {s.topicCount} topic{s.topicCount === 1 ? "" : "s"} &middot;{" "}
-                {s.documentCount} file{s.documentCount === 1 ? "" : "s"}
-              </p>
+                <ProgressBar
+                  done={s.revisedCount}
+                  total={s.documentCount}
+                  className="mt-5"
+                />
+              </div>
             </Link>
           ))}
         </div>

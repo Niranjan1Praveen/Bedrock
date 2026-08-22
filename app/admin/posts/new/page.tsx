@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function NewPostPage() {
-  if (!(await getUser())) redirect("/login?next=/admin/new");
+  if (!(await getUser())) redirect("/login?next=/admin/posts/new");
 
   return (
     <Container className="py-16 sm:py-20">

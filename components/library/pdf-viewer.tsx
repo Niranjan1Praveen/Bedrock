@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
+import { RevisedToggle } from "@/components/library/revised-toggle";
 
 // pdf.js parses in a worker. Resolving it through import.meta.url lets the
 // bundler emit it as an asset rather than requiring a copy in /public that
@@ -30,10 +31,12 @@ export function PdfViewer({
   documentId,
   title,
   initialPageCount,
+  revised,
 }: {
   documentId: string;
   title: string;
   initialPageCount?: number | null;
+  revised: boolean;
 }) {
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +45,7 @@ export function PdfViewer({
   const [scale, setScale] = useState(1);
   const [width, setWidth] = useState(0);
 
+  const [showTop, setShowTop] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
   const reported = useRef(false);
@@ -73,6 +77,24 @@ export function PdfViewer({
     });
     ro.observe(el);
     return () => ro.disconnect();
+  }, []);
+
+  // Show the jump-to-top control once there is enough behind you to make
+  // scrolling back a chore. Passive listener so it never blocks scrolling,
+  // and rAF-throttled so a long document does not fire setState per frame.
+  useEffect(() => {
+    let ticking = false;
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setShowTop(window.scrollY > 800);
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   // Track which page is in view, for the counter.
@@ -133,6 +155,14 @@ export function PdfViewer({
         </span>
 
         <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
+          >
+            Top
+          </button>
+          <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
           <button
             type="button"
             onClick={() => jump(Math.max(1, current - 1))}
@@ -221,10 +251,30 @@ export function PdfViewer({
         )}
       </div>
 
-      <p className="text-ink-subtle mt-3 text-sm">
-        {title}
-        {pages ? ` — ${pages} page${pages === 1 ? "" : "s"}` : ""}
-      </p>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <p className="text-ink-subtle text-sm">
+          {title}
+          {pages ? ` — ${pages} page${pages === 1 ? "" : "s"}` : ""}
+        </p>
+        <RevisedToggle documentId={documentId} revised={revised} size="md" />
+      </div>
+
+      {/* Floating jump-to-top. Sized for a thumb, offset clear of the edge,
+          and clipped from the layout until it is actually useful. */}
+      <button
+        type="button"
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        aria-label="Back to top"
+        className={`border-line bg-surface text-ink-subtle hover:text-ink hover:border-ink-subtle fixed right-5 bottom-5 z-30 flex size-12 items-center justify-center rounded-full border shadow-lg backdrop-blur transition-all sm:right-8 sm:bottom-8 ${
+          showTop
+            ? "pointer-events-auto translate-y-0 opacity-100"
+            : "pointer-events-none translate-y-3 opacity-0"
+        }`}
+      >
+        <span aria-hidden className="text-lg leading-none">
+          &uarr;
+        </span>
+      </button>
     </div>
   );
 }

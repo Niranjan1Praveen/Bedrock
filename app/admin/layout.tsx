@@ -31,25 +31,19 @@ export default async function AdminLayout({
               href="/admin"
               className="mono-label text-ink hover:text-ink-muted transition-colors"
             >
-              Admin
+              Overview
             </Link>
             <Link
-              href="/admin/new"
+              href="/admin/posts"
               className="mono-label text-ink-subtle hover:text-ink transition-colors"
             >
-              New post
+              Posts
             </Link>
             <Link
               href="/admin/library"
               className="mono-label text-ink-subtle hover:text-ink transition-colors"
             >
               Library
-            </Link>
-            <Link
-              href="/blog"
-              className="mono-label text-ink-subtle hover:text-ink transition-colors"
-            >
-              View blog
             </Link>
           </nav>
           <SignOutButton />

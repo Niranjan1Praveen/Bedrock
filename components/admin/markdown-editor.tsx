@@ -158,7 +158,7 @@ export function MarkdownEditor({
     setNotice(status === "PUBLISHED" ? "Published." : "Saved as draft.");
     router.refresh();
     if (mode === "new" || data.post?.slug !== original.slug) {
-      router.replace(`/admin/${data.post.slug}/edit`);
+      router.replace(`/admin/posts/${data.post.slug}/edit`);
     }
   }
 

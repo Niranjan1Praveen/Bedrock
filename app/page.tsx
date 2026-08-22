@@ -169,7 +169,7 @@ export default async function HomePage() {
             </div>
           )}
 
-          <div className="mt-12 grid grid-cols-1 gap-px sm:grid-cols-3">
+          <div className="mt-12 grid grid-cols-1 gap-3 sm:grid-cols-3">
             {tracks.map((track) => {
               const active = track.status === "active";
               const body = (

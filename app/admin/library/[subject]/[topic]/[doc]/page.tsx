@@ -5,7 +5,8 @@ import { Container } from "@/components/ui/container";
 import { prisma } from "@/lib/prisma";
 import { PdfViewer } from "@/components/library/pdf-viewer";
 import { DeleteDocumentButton } from "@/components/library/delete-document-button";
-import { formatBytes } from "@/lib/library";
+import { formatBytes, isRevised } from "@/lib/library";
+import { getUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,10 @@ export default async function DocumentPage({
   const { subject, topic, doc } = await params;
   const found = await load(subject, topic, doc);
   if (!found) notFound();
+
+  const user = await getUser();
+  const userId = typeof user?.sub === "string" ? user.sub : "";
+  const revised = userId ? await isRevised(userId, found.id) : false;
 
   return (
     <Container className="py-10 sm:py-14">
@@ -75,6 +80,7 @@ export default async function DocumentPage({
         documentId={found.id}
         title={found.title}
         initialPageCount={found.pageCount}
+        revised={revised}
       />
     </Container>
   );

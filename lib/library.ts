@@ -161,3 +161,186 @@ export async function upsertTopic(subjectId: string, name: string) {
     create: { slug, name: name.trim(), subjectId },
   });
 }
+
+/* ------------------------------------------------------------------ *
+ * Per-user revision progress
+ *
+ * Progress belongs to one account and is never read across accounts:
+ * every query below is filtered by userId, so the three people with
+ * logins each see only their own state. A missing row means "not
+ * revised", which keeps the table proportional to what has actually
+ * been read rather than to the whole library.
+ * ------------------------------------------------------------------ */
+
+/** Document ids this user has marked, limited to the ids asked about. */
+async function revisedIds(userId: string, documentIds: string[]) {
+  if (documentIds.length === 0) return new Set<string>();
+  const rows = await prisma.documentProgress.findMany({
+    where: { userId, documentId: { in: documentIds } },
+    select: { documentId: true },
+  });
+  return new Set(rows.map((r) => r.documentId));
+}
+
+export interface SubjectCard {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  topicCount: number;
+  documentCount: number;
+  revisedCount: number;
+}
+
+export async function getSubjectsWithProgress(
+  userId: string,
+): Promise<SubjectCard[]> {
+  const subjects = await prisma.subject.findMany({
+    orderBy: [{ position: "asc" }, { name: "asc" }],
+    include: {
+      topics: { select: { documents: { select: { id: true } } } },
+    },
+  });
+
+  const allIds = subjects.flatMap((s) =>
+    s.topics.flatMap((t) => t.documents.map((d) => d.id)),
+  );
+  const revised = await revisedIds(userId, allIds);
+
+  return subjects.map((s) => {
+    const ids = s.topics.flatMap((t) => t.documents.map((d) => d.id));
+    return {
+      id: s.id,
+      slug: s.slug,
+      name: s.name,
+      description: s.description,
+      imageUrl: s.imageUrl,
+      topicCount: s.topics.length,
+      documentCount: ids.length,
+      revisedCount: ids.filter((id) => revised.has(id)).length,
+    };
+  });
+}
+
+export async function getSubjectWithProgress(slug: string, userId: string) {
+  const subject = await getSubjectBySlug(slug);
+  if (!subject) return null;
+
+  const ids = subject.topics.flatMap((t) => t.documents.map((d) => d.id));
+  const revised = await revisedIds(userId, ids);
+
+  const topics = subject.topics.map((t) => {
+    const documents = t.documents.map((d) => ({
+      id: d.id,
+      slug: d.slug,
+      title: d.title,
+      sizeBytes: d.sizeBytes,
+      pageCount: d.pageCount,
+      revised: revised.has(d.id),
+    }));
+    return {
+      id: t.id,
+      slug: t.slug,
+      name: t.name,
+      documents,
+      revisedCount: documents.filter((d) => d.revised).length,
+    };
+  });
+
+  return {
+    id: subject.id,
+    slug: subject.slug,
+    name: subject.name,
+    imageUrl: subject.imageUrl,
+    topics,
+    documentCount: ids.length,
+    revisedCount: ids.filter((id) => revised.has(id)).length,
+  };
+}
+
+export async function isRevised(userId: string, documentId: string) {
+  const row = await prisma.documentProgress.findUnique({
+    where: { userId_documentId: { userId, documentId } },
+  });
+  return Boolean(row);
+}
+
+/** Marking is an upsert; unmarking is a delete, so absence means not revised. */
+export async function setRevised(
+  userId: string,
+  documentId: string,
+  revised: boolean,
+) {
+  if (revised) {
+    await prisma.documentProgress.upsert({
+      where: { userId_documentId: { userId, documentId } },
+      update: {},
+      create: { userId, documentId },
+    });
+  } else {
+    await prisma.documentProgress
+      .delete({ where: { userId_documentId: { userId, documentId } } })
+      .catch(() => {
+        // Already absent, which is the state the caller wanted.
+      });
+  }
+}
+
+/** Marks or unmarks every document in one topic at once. */
+export async function setTopicRevised(
+  userId: string,
+  topicId: string,
+  revised: boolean,
+) {
+  const docs = await prisma.document.findMany({
+    where: { topicId },
+    select: { id: true },
+  });
+  const ids = docs.map((d) => d.id);
+  if (ids.length === 0) return 0;
+
+  if (revised) {
+    await prisma.documentProgress.createMany({
+      data: ids.map((documentId) => ({ userId, documentId })),
+      skipDuplicates: true,
+    });
+  } else {
+    await prisma.documentProgress.deleteMany({
+      where: { userId, documentId: { in: ids } },
+    });
+  }
+  return ids.length;
+}
+
+/** Figures for the admin overview. */
+export async function getLibraryStats(userId: string) {
+  const [subjects, topics, documents, revised, bytes] = await Promise.all([
+    prisma.subject.count(),
+    prisma.topic.count(),
+    prisma.document.count(),
+    prisma.documentProgress.count({ where: { userId } }),
+    prisma.document.aggregate({ _sum: { sizeBytes: true } }),
+  ]);
+  return {
+    subjects,
+    topics,
+    documents,
+    revised,
+    totalBytes: bytes._sum.sizeBytes ?? 0,
+  };
+}
+
+/** Most recently uploaded documents, for the overview's activity list. */
+export async function getRecentDocuments(take = 5) {
+  return prisma.document.findMany({
+    orderBy: { uploadedAt: "desc" },
+    take,
+    include: { topic: { include: { subject: true } } },
+  });
+}
+
+/** Sets or clears a subject's cover image. */
+export async function setSubjectImage(slug: string, imageUrl: string | null) {
+  return prisma.subject.update({ where: { slug }, data: { imageUrl } });
+}
