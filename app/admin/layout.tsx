@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { SignOutButton } from "@/components/admin/sign-out-button";
+import { AdminNav } from "@/components/admin/admin-nav";
 import { getUser } from "@/lib/auth";
 
 /**
@@ -26,26 +26,7 @@ export default async function AdminLayout({
     <>
       <div className="border-line bg-surface border-b">
         <Container className="flex min-h-12 flex-wrap items-center justify-between gap-x-5 gap-y-2 py-2">
-          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <Link
-              href="/admin"
-              className="mono-label text-ink hover:text-ink-muted transition-colors"
-            >
-              Overview
-            </Link>
-            <Link
-              href="/admin/posts"
-              className="mono-label text-ink-subtle hover:text-ink transition-colors"
-            >
-              Posts
-            </Link>
-            <Link
-              href="/admin/library"
-              className="mono-label text-ink-subtle hover:text-ink transition-colors"
-            >
-              Library
-            </Link>
-          </nav>
+          <AdminNav />
           <SignOutButton />
         </Container>
       </div>

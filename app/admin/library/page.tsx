@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
-import { SubjectCover } from "@/components/library/subject-cover";
-import { ProgressBar } from "@/components/library/progress-bar";
+import { SubjectSearch } from "@/components/library/subject-search";
 import { getUser } from "@/lib/auth";
 import { getSubjectsWithProgress } from "@/lib/library";
 
@@ -43,29 +42,7 @@ export default async function LibraryPage() {
           Nothing uploaded yet.
         </p>
       ) : (
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {subjects.map((s) => (
-            <Link
-              key={s.id}
-              href={`/admin/library/${s.slug}`}
-              className="border-line hover:bg-surface group min-w-0 overflow-hidden rounded-xl border transition-colors"
-            >
-              <SubjectCover slug={s.slug} imageUrl={s.imageUrl} />
-              <div className="border-line border-t p-5">
-                <h2 className="truncate text-lg">{s.name}</h2>
-                <p className="mono-label text-ink-subtle mt-2">
-                  {s.topicCount} topic{s.topicCount === 1 ? "" : "s"} &middot;{" "}
-                  {s.documentCount} file{s.documentCount === 1 ? "" : "s"}
-                </p>
-                <ProgressBar
-                  done={s.revisedCount}
-                  total={s.documentCount}
-                  className="mt-5"
-                />
-              </div>
-            </Link>
-          ))}
-        </div>
+        <SubjectSearch subjects={subjects} />
       )}
     </Container>
   );

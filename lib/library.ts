@@ -191,6 +191,9 @@ export interface SubjectCard {
   topicCount: number;
   documentCount: number;
   revisedCount: number;
+  /// Carried to the client so the index can be searched by topic without a
+  /// request. Names only, which stays small even as topics accumulate.
+  topicNames: string[];
 }
 
 export async function getSubjectsWithProgress(
@@ -199,7 +202,10 @@ export async function getSubjectsWithProgress(
   const subjects = await prisma.subject.findMany({
     orderBy: [{ position: "asc" }, { name: "asc" }],
     include: {
-      topics: { select: { documents: { select: { id: true } } } },
+      topics: {
+        orderBy: [{ position: "asc" }, { name: "asc" }],
+        select: { name: true, documents: { select: { id: true } } },
+      },
     },
   });
 
@@ -219,6 +225,7 @@ export async function getSubjectsWithProgress(
       topicCount: s.topics.length,
       documentCount: ids.length,
       revisedCount: ids.filter((id) => revised.has(id)).length,
+      topicNames: s.topics.map((t) => t.name),
     };
   });
 }

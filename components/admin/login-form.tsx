@@ -20,6 +20,7 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [reveal, setReveal] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,12 +62,26 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label htmlFor="password" className="mono-label text-ink-subtle">
-          Password
-        </label>
+        <div className="flex items-baseline justify-between gap-4">
+          <label htmlFor="password" className="mono-label text-ink-subtle">
+            Password
+          </label>
+          {/* Not a checkbox: a labelled toggle states the current state rather
+              than an action, and reads correctly to a screen reader via
+              aria-pressed. */}
+          <button
+            type="button"
+            onClick={() => setReveal((r) => !r)}
+            aria-pressed={reveal}
+            aria-controls="password"
+            className="mono-label text-ink-subtle hover:text-ink transition-colors"
+          >
+            {reveal ? "Hide" : "Show"}
+          </button>
+        </div>
         <input
           id="password"
-          type="password"
+          type={reveal ? "text" : "password"}
           autoComplete="current-password"
           required
           value={password}

@@ -15,8 +15,11 @@ export default function LoginPage() {
       <div className="mx-auto max-w-sm">
         <MonoLabel>Bedrock</MonoLabel>
         <h1 className="mt-4 text-2xl">Sign in</h1>
+        {/* Deliberately vague about what is behind it. This page is public, and
+            naming the library here would tell every visitor it exists. */}
         <p className="text-ink-subtle mt-3 text-sm leading-relaxed">
-          Writing the blog. Nothing else on this site needs an account.
+          Sign in to reach the private area of this site. Everything public
+          works without an account.
         </p>
         {/* LoginForm reads ?next= via useSearchParams, which forces a client
             bailout unless it sits behind a Suspense boundary. */}
