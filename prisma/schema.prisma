@@ -97,6 +97,9 @@ model Document {
   /// public URL for these, by design.
   storagePath String @unique
   sizeBytes   Int
+  /// MIME type, which decides the renderer. Nullable so existing rows stay
+  /// valid; anything null is treated as a PDF, which is what they all are.
+  mimeType    String?
   /// Filled in by the browser after the PDF is first opened, when known.
   pageCount   Int?
   position    Int    @default(0)

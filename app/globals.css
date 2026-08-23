@@ -223,3 +223,47 @@
   font-weight: 500;
   white-space: nowrap;
 }
+
+/* ---------------------------------------------------------------------------
+   Office documents rendered in the viewer.
+   docx-preview and pptx-preview both emit their own markup with their own
+   sizing. These rules only reset the surrounding chrome so the result sits on
+   the dark page like the PDF viewer does, and keep fixed-width pages scrolling
+   inside their own box rather than widening the page.
+--------------------------------------------------------------------------- */
+.docx-host .docx-wrapper {
+  background: transparent;
+  padding: 0;
+  gap: 1rem;
+}
+
+/* Word pages are a fixed width by definition; the white page is correct, the
+   grey gutter around it is not. */
+.docx-host .docx-wrapper > section.docx {
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  box-shadow: none;
+  margin: 0 auto;
+}
+
+.pptx-host {
+  display: block;
+}
+
+.pptx-host canvas,
+.pptx-host img,
+.pptx-host svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Each rendered slide reads as a card, matching a PDF page. */
+.pptx-host > * {
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pptx-host > * + * {
+  margin-top: 1rem;
+}

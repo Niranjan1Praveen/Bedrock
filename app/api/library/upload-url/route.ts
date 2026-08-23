@@ -5,6 +5,7 @@ import {
   upsertSubject,
   upsertTopic,
 } from "@/lib/library";
+import { isAccepted, mimeOf } from "@/lib/file-types";
 
 const MAX_BYTES = 50 * 1024 * 1024;
 const MAX_FILES = 25;
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
 
   // Validate the whole batch before creating anything, so a bad file does not
   // leave a half-made subject behind.
-  const wanted: { name: string; size: number }[] = [];
+  const wanted: { name: string; size: number; mime: string }[] = [];
   for (const f of files) {
     const { name, size, type } = (f ?? {}) as Record<string, unknown>;
     if (typeof name !== "string" || !name.trim()) {
@@ -68,12 +69,18 @@ export async function POST(request: Request) {
         { status: 413 },
       );
     }
-    // The bucket itself also restricts the MIME type, so this is the first of
-    // two checks rather than the only one.
-    if (type !== "application/pdf" && !name.toLowerCase().endsWith(".pdf")) {
-      return Response.json({ error: `${name} is not a PDF` }, { status: 415 });
+    // The bucket restricts MIME types too, so this is the first of two checks.
+    // Browsers report an empty or wrong type for Office files often enough
+    // that the extension has to count as well.
+    const reported = typeof type === "string" ? type : null;
+    if (!isAccepted(reported, name)) {
+      return Response.json(
+        { error: `${name} is not a PDF, DOCX or PPTX` },
+        { status: 415 },
+      );
     }
-    wanted.push({ name, size });
+    // Store the canonical type rather than whatever the browser guessed.
+    wanted.push({ name, size, mime: mimeOf(name, reported) });
   }
 
   const subjectRow = await upsertSubject(subject);
@@ -81,9 +88,14 @@ export async function POST(request: Request) {
 
   const tickets = await Promise.all(
     wanted.map(async (f) => {
-      const path = buildStoragePath(subjectRow.slug, topicRow.slug, f.name);
+      const path = buildStoragePath(
+        subjectRow.slug,
+        topicRow.slug,
+        f.name,
+        f.mime,
+      );
       const { token } = await signedUploadUrl(path);
-      return { name: f.name, size: f.size, path, token };
+      return { name: f.name, size: f.size, mime: f.mime, path, token };
     }),
   );
 

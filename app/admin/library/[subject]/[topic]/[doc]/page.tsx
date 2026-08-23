@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { prisma } from "@/lib/prisma";
-import { PdfViewer } from "@/components/library/pdf-viewer";
+import { DocumentViewer } from "@/components/library/document-viewer";
 import { DeleteDocumentButton } from "@/components/library/delete-document-button";
 import { formatBytes, isRevised } from "@/lib/library";
 import { getUser } from "@/lib/auth";
@@ -75,10 +75,13 @@ export default async function DocumentPage({
       </div>
 
       {/* The viewer fetches its own signed URL client-side, so the link is
-          never baked into this HTML. */}
-      <PdfViewer
+          never baked into this HTML. Which renderer runs is decided from the
+          stored MIME type. */}
+      <DocumentViewer
         documentId={found.id}
         title={found.title}
+        storagePath={found.storagePath}
+        mimeType={found.mimeType}
         initialPageCount={found.pageCount}
         revised={revised}
       />

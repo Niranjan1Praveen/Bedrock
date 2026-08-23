@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { createClient } from "@/lib/supabase/client";
+import { ACCEPT_ATTRIBUTE, isAccepted, mimeOf } from "@/lib/file-types";
 
 interface TreeSubject {
   id: string;
@@ -62,8 +63,8 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
     setError(null);
     const incoming: Item[] = [];
     for (const file of Array.from(list)) {
-      if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
-        setError(`${file.name} is not a PDF and was skipped.`);
+      if (!isAccepted(file.type, file.name)) {
+        setError(`${file.name} is not a PDF, DOCX or PPTX and was skipped.`);
         continue;
       }
       if (file.size > MAX_BYTES) {
@@ -98,7 +99,13 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
     let payload: {
       topic: { id: string; slug: string; name: string };
       subject: { slug: string };
-      tickets: { name: string; size: number; path: string; token: string }[];
+      tickets: {
+        name: string;
+        size: number;
+        mime: string;
+        path: string;
+        token: string;
+      }[];
     };
     try {
       const res = await fetch("/api/library/upload-url", {
@@ -110,7 +117,7 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
           files: pending.map(({ it }) => ({
             name: it.file.name,
             size: it.file.size,
-            type: it.file.type,
+            type: mimeOf(it.file.name, it.file.type),
           })),
         }),
       });
@@ -124,7 +131,12 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
     }
 
     const supabase = createClient();
-    const uploaded: { title: string; storagePath: string; sizeBytes: number }[] = [];
+    const uploaded: {
+      title: string;
+      storagePath: string;
+      sizeBytes: number;
+      mimeType: string;
+    }[] = [];
 
     // A small worker pool rather than Promise.all over everything.
     let cursor = 0;
@@ -139,7 +151,7 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
         const { error } = await supabase.storage
           .from(BUCKET)
           .uploadToSignedUrl(ticket.path, ticket.token, it.file, {
-            contentType: "application/pdf",
+            contentType: ticket.mime,
           });
 
         if (error) {
@@ -150,6 +162,7 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
             title: it.file.name,
             storagePath: ticket.path,
             sizeBytes: it.file.size,
+            mimeType: ticket.mime,
           });
         }
       }
@@ -256,7 +269,7 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
         }`}
       >
         <p className="text-ink-muted text-sm">
-          Drop PDFs here, as many as you like.
+          Drop files here, as many as you like.
         </p>
         <button
           type="button"
@@ -268,7 +281,7 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
         <input
           ref={input}
           type="file"
-          accept="application/pdf,.pdf"
+          accept={ACCEPT_ATTRIBUTE}
           multiple
           className="hidden"
           onChange={(e) => {
@@ -277,7 +290,7 @@ export function UploadForm({ tree }: { tree: TreeSubject[] }) {
           }}
         />
         <p className="text-ink-subtle mt-4 text-sm">
-          PDF only, up to 50MB each, 25 at a time.
+          PDF, DOCX or PPTX, up to 50MB each, 25 at a time.
         </p>
       </div>
 

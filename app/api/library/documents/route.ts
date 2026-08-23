@@ -48,7 +48,10 @@ export async function POST(request: Request) {
   const orphaned: string[] = [];
 
   for (const [i, d] of documents.entries()) {
-    const { title, storagePath, sizeBytes } = (d ?? {}) as Record<string, unknown>;
+    const { title, storagePath, sizeBytes, mimeType } = (d ?? {}) as Record<
+      string,
+      unknown
+    >;
     if (
       typeof title !== "string" ||
       typeof storagePath !== "string" ||
@@ -59,7 +62,8 @@ export async function POST(request: Request) {
 
     // Slugs are unique per topic; a repeat upload of the same title gets a
     // numbered suffix rather than failing the whole batch.
-    const base = slugify(title.replace(/\.pdf$/i, "")) || "document";
+    const base =
+      slugify(title.replace(/\.(pdf|docx|pptx)$/i, "")) || "document";
     let slug = base;
     let n = 1;
     while (await prisma.document.findUnique({ where: { topicId_slug: { topicId, slug } } })) {
@@ -70,10 +74,11 @@ export async function POST(request: Request) {
       created.push(
         await prisma.document.create({
           data: {
-            title: title.replace(/\.pdf$/i, "").trim() || "Untitled",
+            title: title.replace(/\.(pdf|docx|pptx)$/i, "").trim() || "Untitled",
             slug,
             storagePath,
             sizeBytes,
+            mimeType: typeof mimeType === "string" ? mimeType : null,
             topicId,
             position: existing + i,
             uploadedBy: typeof user?.sub === "string" ? user.sub : null,

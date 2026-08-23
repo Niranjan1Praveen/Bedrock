@@ -6,6 +6,7 @@ import { MonoLabel } from "@/components/ui/mono-label";
 import { ProgressBar } from "@/components/library/progress-bar";
 import { RevisedToggle } from "@/components/library/revised-toggle";
 import { formatBytes } from "@/lib/format";
+import { labelOf, type DocumentKind } from "@/lib/file-types";
 
 export interface TopicDocument {
   id: string;
@@ -14,6 +15,7 @@ export interface TopicDocument {
   sizeBytes: number;
   pageCount: number | null;
   revised: boolean;
+  kind: DocumentKind;
 }
 
 /**
@@ -105,7 +107,7 @@ export function TopicSection({
                   className="group hover:bg-surface flex items-center gap-3 px-5 py-4 transition-colors sm:gap-4"
                 >
                   <span className="mono-label text-ink-subtle border-line hidden shrink-0 rounded border px-1.5 py-0.5 sm:inline">
-                    PDF
+                    {labelOf(doc.kind)}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span

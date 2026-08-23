@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { RevisedToggle } from "@/components/library/revised-toggle";
+import { RenderFallback } from "@/components/library/viewer-parts";
 
 // pdf.js parses in a worker. Resolving it through import.meta.url lets the
 // bundler emit it as an asset rather than requiring a copy in /public that
@@ -30,11 +31,13 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 export function PdfViewer({
   documentId,
   title,
+  fileName,
   initialPageCount,
   revised,
 }: {
   documentId: string;
   title: string;
+  fileName: string;
   initialPageCount?: number | null;
   revised: boolean;
 }) {
@@ -140,9 +143,7 @@ export function PdfViewer({
 
   if (error) {
     return (
-      <div className="border-line rounded-xl border border-dashed px-6 py-16 text-center">
-        <p className="text-ink-muted text-sm">{error}</p>
-      </div>
+      <RenderFallback message={error} fileName={fileName} signedUrl={url} />
     );
   }
 
@@ -217,9 +218,11 @@ export function PdfViewer({
               <div className="bg-line/40 h-[70vh] w-full animate-pulse rounded" />
             }
             error={
-              <p className="text-ink-muted py-16 text-center text-sm">
-                That file could not be read as a PDF.
-              </p>
+              <RenderFallback
+                message="That file could not be read as a PDF."
+                fileName={fileName}
+                signedUrl={url}
+              />
             }
           >
             <div className="space-y-4">

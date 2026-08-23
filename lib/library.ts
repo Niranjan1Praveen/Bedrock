@@ -5,6 +5,7 @@ import {
   SIGNED_URL_TTL_SECONDS,
 } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/markdown";
+import { extensionOf, kindOf } from "@/lib/file-types";
 
 export { formatBytes } from "@/lib/format";
 
@@ -128,16 +129,21 @@ export async function deleteStorageObjects(paths: string[]) {
  * Builds the object key for a file.
  *
  * Includes a random suffix so two uploads of `unit-1.pdf` into the same topic
- * cannot collide, and so the key cannot be guessed from the title.
+ * cannot collide, and so the key cannot be guessed from the title. The real
+ * extension is preserved, which is what lets the viewer pick a renderer even
+ * for rows written before mimeType existed.
  */
 export function buildStoragePath(
   subjectSlug: string,
   topicSlug: string,
   fileName: string,
+  reportedType?: string | null,
 ) {
-  const base = slugify(fileName.replace(/\.pdf$/i, "")) || "document";
+  const ext = extensionOf(fileName, reportedType);
+  const base =
+    slugify(fileName.replace(/\.(pdf|docx|pptx)$/i, "")) || "document";
   const suffix = crypto.randomUUID().slice(0, 8);
-  return `${subjectSlug}/${topicSlug}/${base}-${suffix}.pdf`;
+  return `${subjectSlug}/${topicSlug}/${base}-${suffix}${ext}`;
 }
 
 /** Ensures a subject exists, by slug, and returns it. */
@@ -245,6 +251,8 @@ export async function getSubjectWithProgress(slug: string, userId: string) {
       sizeBytes: d.sizeBytes,
       pageCount: d.pageCount,
       revised: revised.has(d.id),
+      // Resolved here so the client never needs the storage path.
+      kind: kindOf(d.mimeType, d.storagePath),
     }));
     return {
       id: t.id,

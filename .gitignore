@@ -42,3 +42,6 @@ next-env.d.ts
 
 # prisma client, rebuilt by `prisma generate` on install
 /generated
+
+# local reference, not part of the app
+UI-CONTEXT.md
