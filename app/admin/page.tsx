@@ -1,8 +1,14 @@
+import { Suspense, cache } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { Pill } from "@/components/ui/pill";
+import {
+  Skeleton,
+  SkeletonFigures,
+  SkeletonRows,
+} from "@/components/ui/skeleton";
 import { ProgressBar } from "@/components/library/progress-bar";
 import { getUser } from "@/lib/auth";
 import { getAllPosts, formatDate } from "@/lib/posts";
@@ -27,42 +33,162 @@ const ACTIONS = [
   { href: "/admin/posts", label: "All posts" },
 ];
 
-export default async function AdminPage() {
+/**
+ * The page shell renders without awaiting anything, and each block below
+ * streams in on its own.
+ *
+ * Previously every query was awaited before a single byte of HTML went out, so
+ * a click sat on the old page until the slowest of four queries finished. Now
+ * the heading, the actions and the section rules paint immediately and each
+ * section fills in as its data lands.
+ *
+ * Two blocks need the same figures, so the fetches are wrapped in React's
+ * cache: they dedupe within a request rather than querying twice.
+ */
+const stats = cache((userId: string) => getLibraryStats(userId));
+const subjects = cache((userId: string) => getSubjectsWithProgress(userId));
+const posts = cache(() => getAllPosts());
+
+async function userId() {
   const user = await getUser();
-  const userId = typeof user?.sub === "string" ? user.sub : "";
+  return typeof user?.sub === "string" ? user.sub : "";
+}
 
-  const [posts, stats, subjects, recentDocs] = await Promise.all([
-    getAllPosts(),
-    getLibraryStats(userId),
-    getSubjectsWithProgress(userId),
-    getRecentDocuments(4),
-  ]);
+async function Headline() {
+  const s = await stats(await userId());
+  return (
+    <h1 className="mt-4 text-3xl">
+      {s.revised} of {s.documents} documents revised
+    </h1>
+  );
+}
 
-  const published = posts.filter((p) => p.status === "PUBLISHED").length;
-  const drafts = posts.length - published;
-  const withProgress = subjects.filter((s) => s.documentCount > 0);
+async function Figures() {
+  const [s, p] = await Promise.all([stats(await userId()), posts()]);
+  const published = p.filter((x) => x.status === "PUBLISHED").length;
 
   const figures = [
     { label: "Published", value: published },
-    { label: "Drafts", value: drafts },
-    { label: "Subjects", value: stats.subjects },
-    { label: "Topics", value: stats.topics },
-    { label: "Documents", value: stats.documents },
-    { label: "Stored", value: formatBytes(stats.totalBytes) },
+    { label: "Drafts", value: p.length - published },
+    { label: "Subjects", value: s.subjects },
+    { label: "Topics", value: s.topics },
+    { label: "Documents", value: s.documents },
+    { label: "Stored", value: formatBytes(s.totalBytes) },
   ];
 
   return (
+    <dl className="grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 lg:grid-cols-6">
+      {figures.map((f) => (
+        <div key={f.label} className="min-w-0">
+          <dt className="mono-label text-ink-subtle">{f.label}</dt>
+          <dd className="text-ink mt-2 text-2xl tabular-nums">{f.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+async function LibraryProgress() {
+  const all = await subjects(await userId());
+  const withDocs = all.filter((s) => s.documentCount > 0);
+
+  if (withDocs.length === 0) {
+    return <p className="text-ink-subtle text-sm">Nothing uploaded yet.</p>;
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+      {withDocs.map((s) => (
+        <Link key={s.id} href={`/admin/library/${s.slug}`} className="group min-w-0">
+          <p className="text-ink-muted group-hover:text-ink truncate text-sm transition-colors">
+            {s.name}
+          </p>
+          <ProgressBar done={s.revisedCount} total={s.documentCount} className="mt-2" />
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+async function RecentUploads() {
+  const docs = await getRecentDocuments(4);
+  if (docs.length === 0) {
+    return <p className="text-ink-subtle mt-4 text-sm">Nothing yet.</p>;
+  }
+
+  return (
+    <ul className="border-line mt-4 border-t">
+      {docs.map((d) => (
+        <li key={d.id} className="border-line border-b">
+          <Link
+            href={`/admin/library/${d.topic.subject.slug}/${d.topic.slug}/${d.slug}`}
+            className="group hover:bg-surface flex items-center gap-4 px-2 py-3 transition-colors"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="text-ink-muted group-hover:text-ink block truncate text-sm transition-colors">
+                {d.title}
+              </span>
+              <span className="mono-label text-ink-subtle mt-1 block truncate">
+                {d.topic.subject.name} · {d.topic.name}
+              </span>
+            </span>
+            <span className="mono-label text-ink-subtle shrink-0">
+              {formatBytes(d.sizeBytes)}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+async function RecentPosts() {
+  const all = await posts();
+  if (all.length === 0) {
+    return <p className="text-ink-subtle mt-4 text-sm">Nothing written yet.</p>;
+  }
+
+  return (
+    <ul className="border-line mt-4 border-t">
+      {all.slice(0, 4).map((p) => (
+        <li key={p.id} className="border-line border-b">
+          <Link
+            href={`/admin/posts/${p.slug}/edit`}
+            className="group hover:bg-surface flex items-center gap-4 px-2 py-3 transition-colors"
+          >
+            <span className="min-w-0 flex-1">
+              <span className="text-ink-muted group-hover:text-ink block truncate text-sm transition-colors">
+                {p.title}
+              </span>
+              <span className="mono-label text-ink-subtle mt-1 block">
+                {formatDate(p.publishedAt)}
+              </span>
+            </span>
+            <Pill tone={p.status === "PUBLISHED" ? "accent" : "warn"}>
+              {p.status === "PUBLISHED" ? "Live" : "Draft"}
+            </Pill>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default function AdminPage() {
+  return (
     <Container className="py-16 sm:py-20">
       <MonoLabel>Overview</MonoLabel>
-      <h1 className="mt-4 text-3xl">
-        {stats.revised} of {stats.documents} documents revised
-      </h1>
+
+      <Suspense fallback={<Skeleton className="mt-4 h-9 w-80" />}>
+        <Headline />
+      </Suspense>
+
       <p className="text-ink-subtle mt-3 max-w-xl text-sm leading-relaxed">
         Progress below is yours alone. The other accounts keep their own and
         cannot see this.
       </p>
 
-      {/* Quick actions */}
+      {/* Static, so it is interactive before any query returns. */}
       <div className="mt-9 flex flex-wrap gap-3">
         {ACTIONS.map((a, i) => (
           <Link
@@ -79,20 +205,15 @@ export default async function AdminPage() {
         ))}
       </div>
 
-      {/* Counts at a glance */}
       <section className="border-line mt-14 border-t pt-8">
         <MonoLabel>At a glance</MonoLabel>
-        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-7 sm:grid-cols-3 lg:grid-cols-6">
-          {figures.map((f) => (
-            <div key={f.label} className="min-w-0">
-              <dt className="mono-label text-ink-subtle">{f.label}</dt>
-              <dd className="text-ink mt-2 text-2xl tabular-nums">{f.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="mt-6">
+          <Suspense fallback={<SkeletonFigures />}>
+            <Figures />
+          </Suspense>
+        </div>
       </section>
 
-      {/* Library progress */}
       <section className="border-line mt-12 border-t pt-8">
         <div className="flex flex-wrap items-baseline justify-between gap-4">
           <MonoLabel>Library progress</MonoLabel>
@@ -103,64 +224,32 @@ export default async function AdminPage() {
             Open &rarr;
           </Link>
         </div>
-
-        {withProgress.length === 0 ? (
-          <p className="text-ink-subtle mt-6 text-sm">Nothing uploaded yet.</p>
-        ) : (
-          <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
-            {withProgress.map((s) => (
-              <Link
-                key={s.id}
-                href={`/admin/library/${s.slug}`}
-                className="group min-w-0"
-              >
-                <p className="text-ink-muted group-hover:text-ink truncate text-sm transition-colors">
-                  {s.name}
-                </p>
-                <ProgressBar
-                  done={s.revisedCount}
-                  total={s.documentCount}
-                  className="mt-2"
-                />
-              </Link>
-            ))}
-          </div>
-        )}
+        <div className="mt-6">
+          <Suspense
+            fallback={
+              <div className="grid grid-cols-1 gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }, (_, i) => (
+                  <div key={i}>
+                    <Skeleton className="h-4 w-2/3" />
+                    <Skeleton className="mt-3 h-3 w-full" />
+                  </div>
+                ))}
+              </div>
+            }
+          >
+            <LibraryProgress />
+          </Suspense>
+        </div>
       </section>
 
-      {/* Recent activity */}
       <section className="border-line mt-12 border-t pt-8">
         <MonoLabel>Recent</MonoLabel>
-
         <div className="mt-6 grid grid-cols-1 gap-10 lg:grid-cols-2">
           <div className="min-w-0">
             <p className="mono-label text-ink-subtle">Uploads</p>
-            {recentDocs.length === 0 ? (
-              <p className="text-ink-subtle mt-4 text-sm">Nothing yet.</p>
-            ) : (
-              <ul className="border-line mt-4 border-t">
-                {recentDocs.map((d) => (
-                  <li key={d.id} className="border-line border-b">
-                    <Link
-                      href={`/admin/library/${d.topic.subject.slug}/${d.topic.slug}/${d.slug}`}
-                      className="group hover:bg-surface flex items-center gap-4 px-2 py-3 transition-colors"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="text-ink-muted group-hover:text-ink block truncate text-sm transition-colors">
-                          {d.title}
-                        </span>
-                        <span className="mono-label text-ink-subtle mt-1 block truncate">
-                          {d.topic.subject.name} · {d.topic.name}
-                        </span>
-                      </span>
-                      <span className="mono-label text-ink-subtle shrink-0">
-                        {formatBytes(d.sizeBytes)}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Suspense fallback={<div className="mt-4"><SkeletonRows rows={4} /></div>}>
+              <RecentUploads />
+            </Suspense>
           </div>
 
           <div className="min-w-0">
@@ -173,32 +262,9 @@ export default async function AdminPage() {
                 All &rarr;
               </Link>
             </div>
-            {posts.length === 0 ? (
-              <p className="text-ink-subtle mt-4 text-sm">Nothing written yet.</p>
-            ) : (
-              <ul className="border-line mt-4 border-t">
-                {posts.slice(0, 4).map((p) => (
-                  <li key={p.id} className="border-line border-b">
-                    <Link
-                      href={`/admin/posts/${p.slug}/edit`}
-                      className="group hover:bg-surface flex items-center gap-4 px-2 py-3 transition-colors"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="text-ink-muted group-hover:text-ink block truncate text-sm transition-colors">
-                          {p.title}
-                        </span>
-                        <span className="mono-label text-ink-subtle mt-1 block">
-                          {formatDate(p.publishedAt)}
-                        </span>
-                      </span>
-                      <Pill tone={p.status === "PUBLISHED" ? "accent" : "warn"}>
-                        {p.status === "PUBLISHED" ? "Live" : "Draft"}
-                      </Pill>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <Suspense fallback={<div className="mt-4"><SkeletonRows rows={4} /></div>}>
+              <RecentPosts />
+            </Suspense>
           </div>
         </div>
       </section>

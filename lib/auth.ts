@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -7,12 +8,20 @@ import { createClient } from "@/lib/supabase/server";
  * getSession() does not and can be spoofed by a forged cookie, so it must never
  * be used to protect anything on the server.
  */
-export async function getUser() {
+/**
+ * Wrapped in React's cache so the JWT is verified once per request.
+ *
+ * Every admin navigation checks the session at least twice -- the layout
+ * guards the section and the page guards itself -- and each check was a
+ * separate signature verification against the published keys. Deduping is
+ * per-request, so it never returns a stale session across requests.
+ */
+export const getUser = cache(async () => {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims) return null;
   return data.claims;
-}
+});
 
 /** Throws if signed out. For route handlers, prefer requireUserOr401. */
 export async function requireUser() {

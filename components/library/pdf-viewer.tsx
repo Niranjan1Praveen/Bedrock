@@ -5,7 +5,11 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { RevisedToggle } from "@/components/library/revised-toggle";
-import { RenderFallback } from "@/components/library/viewer-parts";
+import {
+  RenderFallback,
+  ScrollTopButton,
+  useSignedUrl,
+} from "@/components/library/viewer-parts";
 
 // pdf.js parses in a worker. Resolving it through import.meta.url lets the
 // bundler emit it as an asset rather than requiring a copy in /public that
@@ -16,18 +20,19 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 /**
- * Continuous-scroll PDF reader.
+ * How many pages either side of the current one are actually drawn.
  *
- * Rendered by us rather than handed to the browser's built-in viewer, because
- * that viewer is inconsistent on mobile -- iOS Safari commonly shows only the
- * first page of an embedded PDF -- and comes with its own download and print
- * buttons.
- *
- * The file arrives on a signed URL that expires, fetched only after the
- * session has been checked. Worth being clear-eyed: the bytes must reach the
- * browser for any of this to render, so this stops links leaking, not a
- * determined person with devtools.
+ * This is the fix for pages rendering blank. Every page used to be mounted at
+ * once, which for a 52-page set of notes meant 52 canvases plus 52 text layers,
+ * and 331 for the largest file here. Browsers cap total canvas memory and
+ * quietly paint anything past the budget white, so long documents came out
+ * blank from some point onward. Five canvases at a time never approaches it.
  */
+const WINDOW = 2;
+
+/** Fallback page shape before the real aspect ratio is known: A4 portrait. */
+const DEFAULT_ASPECT = 1.414;
+
 export function PdfViewer({
   documentId,
   title,
@@ -41,89 +46,79 @@ export function PdfViewer({
   initialPageCount?: number | null;
   revised: boolean;
 }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { url, error, retry } = useSignedUrl(documentId);
+
   const [pages, setPages] = useState(initialPageCount ?? 0);
   const [current, setCurrent] = useState(1);
   const [scale, setScale] = useState(1);
-  const [width, setWidth] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [aspect, setAspect] = useState(DEFAULT_ASPECT);
+  const [failed, setFailed] = useState<string | null>(null);
 
-  const [showTop, setShowTop] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const ratios = useRef(new Map<number, number>());
   const reported = useRef(false);
 
-  // Fetch the signed URL. Deliberately not stored in the page HTML, so it
-  // cannot be scraped from a cached document.
-  useEffect(() => {
-    let cancelled = false;
-    fetch(`/api/library/documents/${documentId}/url`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
-      .then((d: { url: string }) => {
-        if (!cancelled) setUrl(d.url);
-      })
-      .catch(() => {
-        if (!cancelled) setError("Could not open that file. Try reloading.");
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [documentId]);
+  // Width the page is drawn at. Zoom multiplies it rather than being handed to
+  // react-pdf separately: passing both `width` and `scale` makes it multiply
+  // them, so 250% was quietly producing a canvas 6.25 times the area.
+  const renderWidth = containerWidth
+    ? Math.max(280, containerWidth - 24) * scale
+    : 0;
+  const placeholderHeight = renderWidth ? Math.round(renderWidth * aspect) : 600;
 
-  // Render pages to the container's width so the document fits the screen on a
-  // phone without horizontal scrolling.
   useEffect(() => {
     const el = frame.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      setWidth(Math.floor(entry.contentRect.width));
-    });
+    const ro = new ResizeObserver(([entry]) =>
+      setContainerWidth(Math.floor(entry.contentRect.width)),
+    );
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
 
-  // Show the jump-to-top control once there is enough behind you to make
-  // scrolling back a chore. Passive listener so it never blocks scrolling,
-  // and rAF-throttled so a long document does not fire setState per frame.
-  useEffect(() => {
-    let ticking = false;
-    const onScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        setShowTop(window.scrollY > 800);
-        ticking = false;
-      });
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  // Track which page is in view, for the counter.
+  /**
+   * Tracks which page is in view.
+   *
+   * The ratio of every page is kept in a map rather than read from the entries
+   * of one callback. An IntersectionObserver only reports entries whose
+   * intersection *changed*, so scrolling one page out of view delivers a single
+   * non-intersecting entry: the old code found nothing visible in that batch and
+   * left the counter frozen, which is why Next and Prev then moved relative to a
+   * stale page number.
+   */
   useEffect(() => {
     if (!pages) return;
+
     const io = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-        if (visible) {
-          const n = Number((visible.target as HTMLElement).dataset.page);
-          if (n) setCurrent(n);
+        for (const e of entries) {
+          const n = Number((e.target as HTMLElement).dataset.page);
+          if (n) ratios.current.set(n, e.isIntersecting ? e.intersectionRatio : 0);
         }
+        let bestPage = 0;
+        let bestRatio = 0;
+        for (const [n, r] of ratios.current) {
+          if (r > bestRatio) {
+            bestRatio = r;
+            bestPage = n;
+          }
+        }
+        if (bestPage) setCurrent(bestPage);
       },
-      { threshold: [0.1, 0.5] },
+      { threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] },
     );
-    pageRefs.current.forEach((el) => el && io.observe(el));
+
+    const observed = pageRefs.current.filter(Boolean) as HTMLDivElement[];
+    observed.forEach((el) => io.observe(el));
     return () => io.disconnect();
   }, [pages]);
 
-  const onLoad = useCallback(
+  const onDocumentLoad = useCallback(
     ({ numPages }: { numPages: number }) => {
       setPages(numPages);
-      // Record the page count once, so listings can show it without opening
-      // every file.
+      setFailed(null);
       if (!reported.current && numPages && numPages !== initialPageCount) {
         reported.current = true;
         fetch(`/api/library/documents/${documentId}`, {
@@ -136,20 +131,34 @@ export function PdfViewer({
     [documentId, initialPageCount],
   );
 
+  /** The first page to render tells us the real page shape. */
+  const onPageLoad = useCallback(
+    (page: { width: number; height: number }) => {
+      if (page.width > 0) {
+        const ratio = page.height / page.width;
+        setAspect((prev) => (Math.abs(prev - ratio) > 0.01 ? ratio : prev));
+      }
+    },
+    [],
+  );
+
   const jump = (n: number) => {
-    const el = pageRefs.current[n - 1];
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const target = Math.min(Math.max(1, n), pages || 1);
+    pageRefs.current[target - 1]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+    // Move the counter immediately rather than waiting for the observer, so a
+    // rapid series of Next clicks advances instead of fighting a stale value.
+    setCurrent(target);
   };
 
   if (error) {
-    return (
-      <RenderFallback message={error} fileName={fileName} signedUrl={url} />
-    );
+    return <RenderFallback message={error} fileName={fileName} signedUrl={url} onRetry={retry} />;
   }
 
   return (
     <div>
-      {/* Controls. Sticky so they stay reachable on a long document. */}
       <div className="border-line bg-surface-2 sticky top-14 z-20 flex flex-wrap items-center justify-between gap-3 rounded-t-xl border px-4 py-2.5">
         <span className="mono-label text-ink-subtle tabular-nums">
           {pages ? `Page ${current} of ${pages}` : "Loading"}
@@ -166,7 +175,7 @@ export function PdfViewer({
           <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
           <button
             type="button"
-            onClick={() => jump(Math.max(1, current - 1))}
+            onClick={() => jump(current - 1)}
             disabled={current <= 1}
             className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors disabled:opacity-30"
           >
@@ -174,7 +183,7 @@ export function PdfViewer({
           </button>
           <button
             type="button"
-            onClick={() => jump(Math.min(pages, current + 1))}
+            onClick={() => jump(current + 1)}
             disabled={!pages || current >= pages}
             className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors disabled:opacity-30"
           >
@@ -183,7 +192,7 @@ export function PdfViewer({
           <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
           <button
             type="button"
-            onClick={() => setScale((s) => Math.max(0.6, s - 0.2))}
+            onClick={() => setScale((s) => Math.max(0.6, Math.round((s - 0.2) * 10) / 10))}
             className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
             aria-label="Zoom out"
           >
@@ -194,7 +203,7 @@ export function PdfViewer({
           </span>
           <button
             type="button"
-            onClick={() => setScale((s) => Math.min(2.5, s + 0.2))}
+            onClick={() => setScale((s) => Math.min(2.5, Math.round((s + 0.2) * 10) / 10))}
             className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
             aria-label="Zoom in"
           >
@@ -209,14 +218,14 @@ export function PdfViewer({
       >
         {!url ? (
           <div className="bg-line/40 h-[70vh] w-full animate-pulse rounded" />
+        ) : failed ? (
+          <RenderFallback message={failed} fileName={fileName} signedUrl={url} onRetry={retry} />
         ) : (
           <Document
             file={url}
-            onLoadSuccess={onLoad}
-            onLoadError={() => setError("That file could not be read as a PDF.")}
-            loading={
-              <div className="bg-line/40 h-[70vh] w-full animate-pulse rounded" />
-            }
+            onLoadSuccess={onDocumentLoad}
+            onLoadError={() => setFailed("That file could not be read as a PDF.")}
+            loading={<div className="bg-line/40 h-[70vh] w-full animate-pulse rounded" />}
             error={
               <RenderFallback
                 message="That file could not be read as a PDF."
@@ -226,29 +235,55 @@ export function PdfViewer({
             }
           >
             <div className="space-y-4">
-              {Array.from({ length: pages }, (_, i) => (
-                <div
-                  key={i}
-                  data-page={i + 1}
-                  ref={(el) => {
-                    pageRefs.current[i] = el;
-                  }}
-                  className="border-line overflow-hidden rounded border bg-white"
-                >
-                  <Page
-                    pageNumber={i + 1}
-                    width={width ? Math.max(280, width - 24) : undefined}
-                    scale={scale}
-                    renderAnnotationLayer={false}
-                    // The text layer is what makes the document selectable and
-                    // searchable by the browser, which is worth keeping.
-                    renderTextLayer
-                    loading={
-                      <div className="bg-line/30 h-[60vh] w-full animate-pulse" />
-                    }
-                  />
-                </div>
-              ))}
+              {Array.from({ length: pages }, (_, i) => {
+                const n = i + 1;
+                // Every page keeps a wrapper of roughly the right height, so
+                // the scrollbar stays honest and jumping to an undrawn page
+                // still lands in the right place. Only the window is drawn.
+                const inWindow = Math.abs(n - current) <= WINDOW;
+
+                return (
+                  <div
+                    key={n}
+                    data-page={n}
+                    ref={(el) => {
+                      pageRefs.current[i] = el;
+                    }}
+                    className="border-line mx-auto overflow-hidden rounded border bg-white"
+                    style={{
+                      width: renderWidth || undefined,
+                      minHeight: inWindow ? undefined : placeholderHeight,
+                    }}
+                  >
+                    {inWindow ? (
+                      <Page
+                        pageNumber={n}
+                        width={renderWidth || undefined}
+                        onLoadSuccess={onPageLoad}
+                        renderAnnotationLayer={false}
+                        // Keeps the text selectable and findable with Ctrl+F.
+                        // Affordable now that only a handful of pages exist.
+                        renderTextLayer
+                        loading={
+                          <div
+                            className="bg-line/20 w-full animate-pulse"
+                            style={{ height: placeholderHeight }}
+                          />
+                        }
+                      />
+                    ) : (
+                      <div
+                        className="flex items-center justify-center"
+                        style={{ height: placeholderHeight }}
+                      >
+                        <span className="mono-label text-ink-subtle/40 tabular-nums">
+                          {n}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </Document>
         )}
@@ -262,22 +297,7 @@ export function PdfViewer({
         <RevisedToggle documentId={documentId} revised={revised} size="md" />
       </div>
 
-      {/* Floating jump-to-top. Sized for a thumb, offset clear of the edge,
-          and clipped from the layout until it is actually useful. */}
-      <button
-        type="button"
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        aria-label="Back to top"
-        className={`border-line bg-surface text-ink-subtle hover:text-ink hover:border-ink-subtle fixed right-5 bottom-5 z-30 flex size-12 items-center justify-center rounded-full border shadow-lg backdrop-blur transition-all sm:right-8 sm:bottom-8 ${
-          showTop
-            ? "pointer-events-auto translate-y-0 opacity-100"
-            : "pointer-events-none translate-y-3 opacity-0"
-        }`}
-      >
-        <span aria-hidden className="text-lg leading-none">
-          &uarr;
-        </span>
-      </button>
+      <ScrollTopButton />
     </div>
   );
 }
