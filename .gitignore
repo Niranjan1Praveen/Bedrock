@@ -45,3 +45,6 @@ next-env.d.ts
 
 # local reference, not part of the app
 UI-CONTEXT.md
+
+# pdf.js runtime assets, copied from node_modules on install
+/public/pdfjs

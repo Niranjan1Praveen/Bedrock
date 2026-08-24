@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "predev": "prisma generate",
+    "predev": "prisma generate && node scripts/copy-pdfjs-assets.mjs",
     "build": "next build",
-    "prebuild": "prisma generate",
+    "prebuild": "prisma generate && node scripts/copy-pdfjs-assets.mjs",
     "start": "next start",
     "lint": "eslint .",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate && node scripts/copy-pdfjs-assets.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
