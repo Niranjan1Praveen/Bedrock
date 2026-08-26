@@ -65,7 +65,7 @@ export default async function PostPage({ params }: PageProps<"/blog/[slug]">) {
           </Pill>
         )}
 
-        <h1 className="text-3xl sm:text-4xl">{post.title}</h1>
+        <h1 className="text-3xl sm:text-4xl leading-snug">{post.title}</h1>
 
         <div className="text-ink-subtle mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
           <MonoLabel>{formatDate(post.publishedAt)}</MonoLabel>
