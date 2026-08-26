@@ -75,6 +75,9 @@ export function PdfViewerImpl({
   const { url, error, retry } = useSignedUrl(documentId);
 
   const [pages, setPages] = useState(initialPageCount ?? 0);
+  // Bumped once per successful load, unconditionally -- see the effect below
+  // for why `pages` alone cannot be trusted to signal this.
+  const [loadTick, setLoadTick] = useState(0);
   const [current, setCurrent] = useState(1);
   const [scale, setScale] = useState(1);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -143,9 +146,19 @@ export function PdfViewerImpl({
    * non-intersecting entry: the old code found nothing visible in that batch and
    * left the counter frozen, which is why Next and Prev then moved relative to a
    * stale page number.
+   *
+   * This reruns on `loadTick`, not on `pages` reaching a real value. react-pdf's
+   * <Document> only mounts these page wrappers once its *own* internal `pdf`
+   * state resolves, which lags behind `pages`: `pages` starts out already set
+   * to the document's cached page count (`initialPageCount`), so for any file
+   * that had been opened before, the real load finishing calls `setPages` with
+   * that same number back, React sees no change and skips the re-render, and
+   * this effect -- keyed on `pages` -- never reran to find the wrappers that
+   * had since mounted. `loadTick` is bumped unconditionally on every load, so
+   * it always forces a rerun once those wrappers actually exist.
    */
   useEffect(() => {
-    if (!pages) return;
+    if (!pages || !loadTick) return;
 
     const io = new IntersectionObserver(
       (entries) => {
@@ -169,12 +182,13 @@ export function PdfViewerImpl({
     const observed = pageRefs.current.filter(Boolean) as HTMLDivElement[];
     observed.forEach((el) => io.observe(el));
     return () => io.disconnect();
-  }, [pages]);
+  }, [pages, loadTick]);
 
   const onDocumentLoad = useCallback(
     ({ numPages }: { numPages: number }) => {
       setPages(numPages);
       setFailed(null);
+      setLoadTick((t) => t + 1);
       if (!reported.current && numPages && numPages !== initialPageCount) {
         reported.current = true;
         fetch(`/api/library/documents/${documentId}`, {
