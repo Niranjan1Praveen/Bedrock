@@ -3,10 +3,10 @@ import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { Pill } from "@/components/ui/pill";
 import { Viz } from "@/components/viz";
-import { ProjectCard } from "@/components/home/project-card";
-import { ProgressStrip } from "@/components/home/progress-strip";
+import { HideScrollbar } from "@/components/home/hide-scrollbar";
+import { SelectedWork } from "@/components/home/selected-work";
 import { LeetCodeStats } from "@/components/home/leetcode-stats";
-import { featuredProjects } from "@/content/projects";
+import { projects } from "@/content/projects";
 import { hackathons, profile, skills } from "@/content/profile";
 import { getProblem, getProblems, getTracks } from "@/lib/content";
 import { formatDate, getLatestPosts, type PostWithTags } from "@/lib/posts";
@@ -33,6 +33,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <HideScrollbar />
+
       {/* Hero */}
       <Container className="pt-20 pb-16 sm:pt-28 sm:pb-20">
         <MonoLabel>{profile.role}</MonoLabel>
@@ -77,22 +79,119 @@ export default async function HomePage() {
       </Container>
 
       <Container>
-        {/* Projects */}
+        {/* About */}
         <section className="border-line border-t py-16 sm:py-20">
-          <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <MonoLabel>Selected projects</MonoLabel>
-            <Link
-              href="/projects"
-              className="mono-label text-ink-subtle hover:text-ink transition-colors"
-            >
-              All projects &rarr;
-            </Link>
-          </div>
+          <MonoLabel>About</MonoLabel>
 
-          <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
-            {featuredProjects.map((p) => (
-              <ProjectCard key={p.slug} project={p} />
-            ))}
+          <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
+            <div className="min-w-0">
+              <h3 className="text-lg">Tools</h3>
+              <dl className="mt-6 space-y-5">
+                {skills.map((group) => (
+                  <div key={group.group}>
+                    <dt className="mono-label text-ink-subtle">
+                      {group.group}
+                    </dt>
+                    <dd className="mt-2.5 flex flex-wrap gap-1.5">
+                      {group.items.map((item) => (
+                        <span
+                          key={item}
+                          className="mono-label border-line text-ink-muted rounded border px-2 py-1"
+                        >
+                          {item}
+                        </span>
+                      ))}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <div className="min-w-0">
+              <h3 className="text-lg">Hackathons</h3>
+              <ul className="border-line mt-6 border-t">
+                {hackathons.map((h) => (
+                  <li
+                    key={`${h.event}-${h.project}`}
+                    className="border-line flex gap-4 border-b py-4"
+                  >
+                    <span className="mono-label text-accent w-24 shrink-0 pt-0.5 leading-relaxed">
+                      {h.result}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="text-ink-muted block text-sm leading-relaxed">
+                        {h.event}
+                      </span>
+                      <span className="text-ink-subtle mt-1 block text-sm">
+                        <Link
+                          href={`/projects/${h.projectSlug}`}
+                          className="hover:text-ink transition-colors"
+                        >
+                          {h.project}
+                        </Link>
+                        , {h.year}
+                      </span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <h3 className="mt-12 text-lg">Education</h3>
+              <div className="mt-6">
+                <p className="text-ink">{profile.education.degree}</p>
+                <p className="text-ink-muted mt-1.5 text-sm">
+                  {profile.education.school}
+                </p>
+                <p className="text-ink-subtle mt-1.5 text-sm">
+                  {profile.education.period} &middot; {profile.education.result}
+                </p>
+                <p className="text-ink-subtle mt-4 text-sm leading-relaxed">
+                  Coursework: {profile.education.coursework.join(", ")}.
+                </p>
+              </div>
+
+              <h3 className="mt-12 text-lg">Contact</h3>
+              <p className="text-ink-subtle mt-5 text-sm">{profile.location}</p>
+              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
+                <a
+                  href={`mailto:${profile.links.email}`}
+                  className="mono-label text-ink hover:text-ink-muted transition-colors"
+                >
+                  Email
+                </a>
+                <a
+                  href={profile.links.linkedin}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mono-label text-ink-subtle hover:text-ink transition-colors"
+                >
+                  LinkedIn &rarr;
+                </a>
+                <a
+                  href={profile.links.github}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="mono-label text-ink-subtle hover:text-ink transition-colors"
+                >
+                  GitHub &rarr;
+                </a>
+                <a
+                  href={profile.links.resume}
+                  className="mono-label text-ink-subtle hover:text-ink transition-colors"
+                >
+                  Résumé &rarr;
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Selected work */}
+        <section id="selected-work" className="border-line border-t py-16 sm:py-20">
+          <MonoLabel>Selected work</MonoLabel>
+
+          <div className="mt-8">
+            <SelectedWork projects={projects} />
           </div>
         </section>
 
@@ -204,111 +303,6 @@ export default async function HomePage() {
                 </div>
               );
             })}
-          </div>
-
-          <div className="mt-12 max-w-md">
-            <ProgressStrip track="sql-50" total={sql50.length} />
-          </div>
-        </section>
-
-        {/* About */}
-        <section className="border-line border-t py-16 sm:py-20">
-          <MonoLabel>About</MonoLabel>
-
-          <div className="mt-8 grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-16">
-            <div className="min-w-0">
-              <h3 className="text-lg">Tools</h3>
-              <dl className="mt-6 space-y-5">
-                {skills.map((group) => (
-                  <div key={group.group}>
-                    <dt className="mono-label text-ink-subtle">
-                      {group.group}
-                    </dt>
-                    <dd className="mt-2.5 flex flex-wrap gap-1.5">
-                      {group.items.map((item) => (
-                        <span
-                          key={item}
-                          className="mono-label border-line text-ink-muted rounded border px-2 py-1"
-                        >
-                          {item}
-                        </span>
-                      ))}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
-            <div className="min-w-0">
-              <h3 className="text-lg">Hackathons</h3>
-              <ul className="border-line mt-6 border-t">
-                {hackathons.map((h) => (
-                  <li
-                    key={`${h.event}-${h.project}`}
-                    className="border-line flex gap-4 border-b py-4"
-                  >
-                    <span className="mono-label text-accent w-24 shrink-0 pt-0.5 leading-relaxed">
-                      {h.result}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="text-ink-muted block text-sm leading-relaxed">
-                        {h.event}
-                      </span>
-                      <span className="text-ink-subtle mt-1 block text-sm">
-                        {h.project}, {h.year}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-
-              <h3 className="mt-12 text-lg">Education</h3>
-              <div className="mt-6">
-                <p className="text-ink">{profile.education.degree}</p>
-                <p className="text-ink-muted mt-1.5 text-sm">
-                  {profile.education.school}
-                </p>
-                <p className="text-ink-subtle mt-1.5 text-sm">
-                  {profile.education.period} &middot; {profile.education.result}
-                </p>
-                <p className="text-ink-subtle mt-4 text-sm leading-relaxed">
-                  Coursework: {profile.education.coursework.join(", ")}.
-                </p>
-              </div>
-
-              <h3 className="mt-12 text-lg">Contact</h3>
-              <p className="text-ink-subtle mt-5 text-sm">{profile.location}</p>
-              <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
-                <a
-                  href={`mailto:${profile.links.email}`}
-                  className="mono-label text-ink hover:text-ink-muted transition-colors"
-                >
-                  Email
-                </a>
-                <a
-                  href={profile.links.linkedin}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="mono-label text-ink-subtle hover:text-ink transition-colors"
-                >
-                  LinkedIn &rarr;
-                </a>
-                <a
-                  href={profile.links.github}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="mono-label text-ink-subtle hover:text-ink transition-colors"
-                >
-                  GitHub &rarr;
-                </a>
-                <a
-                  href={profile.links.resume}
-                  className="mono-label text-ink-subtle hover:text-ink transition-colors"
-                >
-                  Résumé &rarr;
-                </a>
-              </div>
-            </div>
           </div>
         </section>
       </Container>

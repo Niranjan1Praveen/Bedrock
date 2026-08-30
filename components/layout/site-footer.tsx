@@ -19,7 +19,7 @@ export function SiteFooter() {
 
         <nav className="flex flex-wrap items-start gap-x-6 gap-y-3">
           <Link
-            href="/projects"
+            href="/#selected-work"
             className="mono-label text-ink-subtle hover:text-ink transition-colors"
           >
             Projects

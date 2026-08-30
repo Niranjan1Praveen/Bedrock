@@ -267,3 +267,13 @@
 .pptx-host > * + * {
   margin-top: 1rem;
 }
+
+/* Applied to <html> only while the homepage is mounted -- see
+   components/home/hide-scrollbar.tsx. Scrolling itself still works. */
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}

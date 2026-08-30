@@ -19,10 +19,10 @@ export interface Project {
   stack: string[];
   repo: string;
   live?: string;
-  /** Shown on the homepage rather than only on the projects page. */
-  featured: boolean;
   /** Separate repositories that make up the rest of the system. */
   related?: { name: string; repo: string }[];
+  /** Real screenshot, once one exists. Falls back to generated art. */
+  image?: string;
 }
 
 export const projects: Project[] = [
@@ -38,7 +38,6 @@ export const projects: Project[] = [
     stack: ["Next.js", "Supabase", "Python"],
     repo: "https://github.com/Niranjan1Praveen/DropConnect",
     live: "https://drop-connect-development.vercel.app",
-    featured: true,
     related: [
       {
         name: "Impact assessment dashboard",
@@ -66,7 +65,6 @@ export const projects: Project[] = [
     stack: ["React", "Three.js", "Python", "scikit-learn"],
     repo: "https://github.com/Niranjan1Praveen/Exoplanetarium-NasaSpaceAppsChallenge",
     live: "https://exoplanetarium-nasa-space-apps-chal.vercel.app",
-    featured: true,
     related: [
       {
         name: "Habitability estimator",
@@ -93,7 +91,6 @@ export const projects: Project[] = [
     stack: ["Next.js", "Python", "TensorFlow", "PyTorch"],
     repo: "https://github.com/Niranjan1Praveen/AdversaNet",
     live: "https://adversa-net.vercel.app",
-    featured: true,
     related: [
       {
         name: "Custom models",
@@ -112,7 +109,6 @@ export const projects: Project[] = [
     stack: ["Next.js", "Vapi AI", "Prisma", "Supabase", "Flask"],
     repo: "https://github.com/Niranjan1Praveen/EchoWithin",
     live: "https://eco-within.vercel.app",
-    featured: true,
     related: [
       {
         name: "Analysis model",
@@ -120,9 +116,6 @@ export const projects: Project[] = [
       },
     ],
   },
-
-  // Everything below appears on the projects page only.
-
   {
     slug: "vahaanbandhu",
     name: "VahaanBandhu",
@@ -135,7 +128,6 @@ export const projects: Project[] = [
     stack: ["Next.js", "Azure"],
     repo: "https://github.com/Niranjan1Praveen/VahaanBandhu",
     live: "https://vahaan-bandhu.vercel.app",
-    featured: false,
     related: [
       {
         name: "Truck route navigator",
@@ -155,7 +147,6 @@ export const projects: Project[] = [
     stack: ["Next.js", "Python", "NLP"],
     repo: "https://github.com/Niranjan1Praveen/MediScribe-Cyfuture-1.0",
     live: "https://medi-scribe-pi.vercel.app",
-    featured: false,
   },
   {
     slug: "mediconnect",
@@ -169,7 +160,6 @@ export const projects: Project[] = [
     stack: ["Next.js", "Firebase"],
     repo: "https://github.com/Niranjan1Praveen/MediConnect",
     live: "https://hack4-health.vercel.app",
-    featured: false,
   },
   {
     slug: "industrial-wastewater-dashboard",
@@ -182,7 +172,6 @@ export const projects: Project[] = [
     stack: ["Next.js", "Python"],
     repo: "https://github.com/Niranjan1Praveen/industrial-waste-water-dashboard",
     live: "https://industrial-waste-water-dashboard.vercel.app",
-    featured: false,
     related: [
       {
         name: "Monitoring server",
@@ -190,38 +179,4 @@ export const projects: Project[] = [
       },
     ],
   },
-  {
-    slug: "ecospark",
-    name: "EcoSpark",
-    subtitle: "Sustainability tracking",
-    year: "2025",
-    summary:
-      "Scores everyday habits for environmental impact, sets challenges against them and charts the result over time.",
-    role: "Built the application and the scoring logic.",
-    stack: ["Next.js", "Python", "Gemini"],
-    repo: "https://github.com/Niranjan1Praveen/EcoSpark",
-    live: "https://eco-spark-5vta.vercel.app",
-    featured: false,
-    related: [
-      {
-        name: "Bill upload service",
-        repo: "https://github.com/Niranjan1Praveen/EcoSpark-BillUpload",
-      },
-    ],
-  },
-  {
-    slug: "footprintly",
-    name: "FootPrintly",
-    subtitle: "Carbon footprint estimate",
-    year: "2024",
-    summary:
-      "Works out a carbon footprint from a questionnaire on commuting, diet, home energy, clothing and waste, then suggests where to cut it.",
-    role: "Built the application and the scoring model.",
-    stack: ["Next.js", "JavaScript"],
-    repo: "https://github.com/Niranjan1Praveen/FootPrintly",
-    live: "https://foot-printly.vercel.app",
-    featured: false,
-  },
 ];
-
-export const featuredProjects = projects.filter((p) => p.featured);
