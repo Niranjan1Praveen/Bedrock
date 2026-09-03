@@ -59,7 +59,7 @@ export function SiteHeader() {
       // aria-hidden while off-screen so the links are not read out or tabbed
       // into while invisible.
       aria-hidden={hidden}
-      className={`bg-base/80 sticky top-0 z-50 backdrop-blur-md transition-[transform,opacity] duration-300 ${
+      className={`bg-base/80 sticky top-0 z-50 backdrop-blur-md transition-[transform,opacity] duration-300${
         hidden
           ? "pointer-events-none -translate-y-full opacity-0"
           : "translate-y-0 opacity-100"
@@ -81,11 +81,18 @@ export function SiteHeader() {
             without pulling the links off centre. */}
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-3 md:flex">
           {CENTRE.map((item) => (
-            <Link key={item.href} href={item.href} className={centreLinkClass}>
+            <Link
+              key={item.href}
+              href={item.href}
+              className={centreLinkClass}
+            >
               {item.label}
             </Link>
           ))}
-          <a href={`mailto:${profile.links.email}`} className={centreLinkClass}>
+          <a
+            href={`mailto:${profile.links.email}`}
+            className={centreLinkClass}
+          >
             Contact me
           </a>
         </nav>

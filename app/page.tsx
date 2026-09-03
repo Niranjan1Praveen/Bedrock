@@ -5,6 +5,7 @@ import { Viz } from "@/components/viz";
 import { HideScrollbar } from "@/components/home/hide-scrollbar";
 import { SmoothScroll } from "@/components/home/smooth-scroll";
 import { HeroSlider } from "@/components/home/hero-slider";
+import { PhysicsBalls } from "@/components/home/physics-balls";
 import { Capabilities } from "@/components/home/capabilities";
 import { SelectedWork } from "@/components/home/selected-work";
 import { LeetCodeStats } from "@/components/home/leetcode-stats";
@@ -66,6 +67,8 @@ export default async function HomePage() {
       <HideScrollbar />
       <SmoothScroll />
 
+      <PhysicsBalls />
+
       {/* Hero. Full-bleed rather than inside a Container: the name is set to
           the viewport width, and the ribbon runs off the right edge instead
           of stopping at a column. */}
@@ -77,7 +80,9 @@ export default async function HomePage() {
               capped so it stays two lines rather than one very long one.
               Heavier than the site's 400-weight headings, which is too light
               to hold together at this size. */}
-          <h1 className="mt-8 max-w-[7em] text-[clamp(3.75rem,12vw,11rem)] leading-[0.86] font-medium">
+          <h1
+            className="mt-8 max-w-[7em] text-[clamp(3.75rem,12vw,11rem)] leading-[0.86] font-medium"
+          >
             {profile.name}
           </h1>
         </div>
@@ -85,12 +90,16 @@ export default async function HomePage() {
         {/* Copy and links sit bottom-left, the ribbon bottom-right. */}
         <div className="mt-16 grid items-end gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,42%)] lg:gap-16">
           <div className="min-w-0 px-6 sm:px-10">
-            <p className="text-ink-muted max-w-lg text-lg leading-relaxed sm:text-xl">
+            <p
+              className="text-ink-muted max-w-lg text-lg leading-relaxed sm:text-xl"
+            >
               I build web applications and the machine learning services behind
               them. Computer science undergraduate at Amity University, Noida.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div
+              className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3"
+            >
               <a
                 href={`mailto:${profile.links.email}`}
                 className="text-ink hover:text-ink-muted font-mono text-[0.8125rem] font-medium tracking-[0.14em] uppercase transition-colors"
