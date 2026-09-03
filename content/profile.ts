@@ -43,6 +43,56 @@ export const skills: { group: string; items: string[] }[] = [
   { group: "Tools", items: ["Git", "Vercel", "Flask", "Blender"] },
 ];
 
+export interface Capability {
+  title: string;
+  /** What the work actually involves. One sentence, no selling. */
+  summary: string;
+  /** The tools used for it, drawn from `skills` above. */
+  items: string[];
+}
+
+/**
+ * The same technologies as `skills`, regrouped by the kind of work they are
+ * used for rather than by category. `skills` stays the flat reference list;
+ * this is what the homepage reads.
+ */
+export const capabilities: Capability[] = [
+  {
+    title: "Web applications",
+    summary:
+      "Interfaces and the APIs behind them, built end to end and deployed.",
+    items: ["Next.js", "React", "Tailwind CSS", "JavaScript", "HTML", "CSS"],
+  },
+  {
+    title: "Machine learning",
+    summary:
+      "Models trained and evaluated, then served behind an API the application can call.",
+    items: [
+      "Python",
+      "PyTorch",
+      "TensorFlow",
+      "scikit-learn",
+      "LangGraph",
+      "Matplotlib",
+    ],
+  },
+  {
+    title: "Data and infrastructure",
+    summary:
+      "Schema design, the queries that run against it, and the hosting the rest of it sits on.",
+    items: [
+      "PostgreSQL",
+      "SQL",
+      "Prisma",
+      "Supabase",
+      "Firebase",
+      "Flask",
+      "Vercel",
+      "Git",
+    ],
+  },
+];
+
 export interface Hackathon {
   result: string;
   event: string;

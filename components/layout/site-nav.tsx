@@ -2,10 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { profile } from "@/content/profile";
 
 const NAV = [
   { href: "/", label: "Home" },
+  // Projects, About me and Contact me also sit in the centre of the header at
+  // md and up. They are repeated here because that row is hidden below md,
+  // and the Menu is then the only way to reach them.
   { href: "/#selected-work", label: "Projects" },
+  { href: "/#capabilities", label: "About me" },
   { href: "/blog", label: "Blog" },
   { href: "/tracks/sql-50", label: "SQL 50" },
   { href: "/tracks", label: "All tracks" },
@@ -78,7 +83,7 @@ export function SiteNav() {
         aria-expanded={open}
         aria-controls="site-menu"
         aria-haspopup="menu"
-        className={`mono-label rounded border px-3 py-1.5 transition-colors ${
+        className={`rounded border px-3.5 py-2 font-mono text-[0.8125rem] font-medium tracking-[0.14em] uppercase transition-colors ${
           open
             ? "border-ink-subtle text-ink"
             : "border-line text-ink-subtle hover:border-ink-subtle hover:text-ink"
@@ -91,18 +96,26 @@ export function SiteNav() {
         <>
           <nav
             id="site-menu"
-            className="border-line bg-surface absolute top-full right-0 z-10 mt-3 w-48 rounded-xl border p-1.5"
+            className="border-line bg-surface absolute top-full right-0 z-10 mt-3 w-56 rounded-xl border p-1.5"
           >
             {NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="mono-label text-ink-subtle hover:bg-surface-2 hover:text-ink block rounded-lg px-3 py-2.5 transition-colors"
+                className="text-ink-subtle hover:bg-surface-2 hover:text-ink block rounded-lg px-3 py-2.5 font-mono text-[0.8125rem] font-medium tracking-[0.14em] uppercase transition-colors"
               >
                 {item.label}
               </Link>
             ))}
+
+            <a
+              href={`mailto:${profile.links.email}`}
+              onClick={() => setOpen(false)}
+              className="text-ink-subtle hover:bg-surface-2 hover:text-ink block rounded-lg px-3 py-2.5 font-mono text-[0.8125rem] font-medium tracking-[0.14em] uppercase transition-colors"
+            >
+              Contact me
+            </a>
 
             {signedIn && (
               <>

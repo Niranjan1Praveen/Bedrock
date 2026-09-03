@@ -107,7 +107,7 @@ export function SelectedWork({ projects }: { projects: Project[] }) {
                 >
                   <ProjectArt project={p} className="absolute inset-0" />
                   <div className="bg-base/85 absolute inset-x-0 bottom-0 px-4 py-3 backdrop-blur-sm">
-                    <p className="text-ink truncate text-base">{p.name}</p>
+                    <p className="text-ink truncate text-[1rem]">{p.name}</p>
                     <p className="mono-label text-ink-subtle mt-0.5">
                       {p.year}
                     </p>
