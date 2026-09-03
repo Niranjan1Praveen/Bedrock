@@ -49,6 +49,32 @@ model Tag {
   posts Post[] @relation("PostTags")
 }
 
+/// A message sent from the contact form on the homepage.
+///
+/// The only table anyone unauthenticated can write to, so it stores as little
+/// as it can get away with: an address to reply to, what was said, and a hash
+/// of the sender's IP. The hash exists purely to rate limit -- it is never
+/// shown and cannot be turned back into an address to write to.
+model ContactMessage {
+  id      String @id @default(cuid())
+  email   String
+  message String
+
+  /// Cleared once it has been dealt with, from the admin list.
+  read Boolean @default(false)
+
+  /// SHA-256 of the sender's IP. Nullable because the header it comes from is
+  /// not guaranteed to be present.
+  ipHash String?
+
+  createdAt DateTime @default(now())
+
+  /// The admin list: newest first.
+  @@index([createdAt(sort: Desc)])
+  /// The rate limit: recent messages from one sender.
+  @@index([ipHash, createdAt])
+}
+
 /// Study material, organised subject -> topic -> document.
 ///
 /// Files live in a private Supabase Storage bucket and are never public: the

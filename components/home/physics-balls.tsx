@@ -31,6 +31,19 @@ const CANDIDATES = "h1,h2,h3,p,li,a,button,img,dt,dd";
  */
 const SOLID = "a,button,img";
 
+/**
+ * Containers whose top rule is a real ledge to land on.
+ *
+ * Only the structural ones -- the capability cards and the tops of the big
+ * lists. Deliberately not `li`, or a ball would perch on every divider in
+ * every list. These are containers rather than surfaces, so only the border
+ * itself is made solid, not the whole box: an entire card as one slab would
+ * seal off everything under it.
+ */
+const RULES = "article,ul,dl";
+/** Thin enough to read as the line, thick enough not to be tunnelled through. */
+const RULE_THICKNESS = 4;
+
 type Vec = { x: number; y: number };
 
 /**
@@ -175,6 +188,30 @@ export function PhysicsBalls() {
           if (statics.length >= MAX_COLLIDERS) break;
         }
 
+        // The structural hairlines, as ledges sitting exactly on the drawn
+        // border. Without these a ball passes straight through a card's top
+        // rule and lands on the heading text some way below it, which reads
+        // as the ball overflowing the line rather than resting on it.
+        for (const el of document.querySelectorAll(RULES)) {
+          if (el.closest("[data-ribbon-track]")) continue;
+          if (parseFloat(getComputedStyle(el).borderTopWidth) <= 0) continue;
+
+          const r = el.getBoundingClientRect();
+          if (r.width < 24) continue;
+          const y = r.top + window.scrollY;
+          if (y < top || y > bottom) continue;
+
+          statics.push(
+            Bodies.rectangle(
+              r.left + window.scrollX + r.width / 2,
+              y,
+              r.width,
+              RULE_THICKNESS,
+              { isStatic: true, restitution: 0.5, friction: 0.4 },
+            ),
+          );
+        }
+
         // The ribbon, as its own clip box rather than its cards. The cards
         // run far past that box on both sides -- only a couple are ever
         // within it -- and being clipped makes them invisible, not absent, so
@@ -215,15 +252,42 @@ export function PhysicsBalls() {
       const balls: Matter.Body[] = [];
 
       /**
-       * Spread across the full width rather than funnelled from one corner,
-       * so some land on the name, some past it, some in the middle. Above the
-       * top of the page by a staggered amount so simultaneous balls do not
-       * fall in a single flat line.
+       * Somewhere across the width, but never straight above the header's
+       * centre links -- a ball landing there just sits on a nav pill and stays
+       * put. The gap is measured from the nav itself rather than assumed to be
+       * the middle third, so it stays right if those links ever move or change
+       * width. Falls back to the whole width when the row is not rendered,
+       * which is every width below md.
        */
-      const spawnPoint = (): Vec => ({
-        x: BALL_RADIUS + Math.random() * (viewW - BALL_RADIUS * 2),
-        y: -60 - Math.random() * 240,
-      });
+      const spawnPoint = (): Vec => {
+        const min = BALL_RADIUS;
+        const max = viewW - BALL_RADIUS;
+
+        const nav = document.querySelector("header nav");
+        const r = nav?.getBoundingClientRect();
+        const blocked =
+          r && r.width > 0
+            ? { from: r.left - BALL_RADIUS, to: r.right + BALL_RADIUS }
+            : null;
+
+        let x = min + Math.random() * (max - min);
+        if (blocked) {
+          const left = Math.max(blocked.from - min, 0);
+          const right = Math.max(max - blocked.to, 0);
+          if (left + right > 0) {
+            // Pick which side by how much room it has, so neither side is
+            // favoured just because it is listed first.
+            x =
+              Math.random() * (left + right) < left
+                ? min + Math.random() * left
+                : blocked.to + Math.random() * right;
+          }
+        }
+
+        // Staggered above the page so simultaneous balls do not fall in a
+        // single flat line.
+        return { x, y: -60 - Math.random() * 240 };
+      };
 
       const spawnVelocity = (): Vec => ({
         x: (Math.random() - 0.5) * 3,

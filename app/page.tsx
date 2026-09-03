@@ -7,6 +7,7 @@ import { SmoothScroll } from "@/components/home/smooth-scroll";
 import { HeroSlider } from "@/components/home/hero-slider";
 import { PhysicsBalls } from "@/components/home/physics-balls";
 import { Capabilities } from "@/components/home/capabilities";
+import { ContactForm } from "@/components/home/contact-form";
 import { SelectedWork } from "@/components/home/selected-work";
 import { LeetCodeStats } from "@/components/home/leetcode-stats";
 import { projects } from "@/content/projects";
@@ -176,7 +177,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-    {/* Writing */}
+      {/* Writing */}
       {posts.length > 0 && (
         <section className="px-6 py-16 sm:px-10 sm:py-20">
           <div className="flex flex-wrap items-baseline justify-between gap-4">
@@ -297,36 +298,40 @@ export default async function HomePage() {
             <MonoLabel>Contact</MonoLabel>
             <h2 className="mt-5 text-3xl sm:text-4xl">Get in touch</h2>
             <p className="text-ink-muted mt-5 max-w-sm leading-relaxed">
-              Email is the surest way to reach me.
+              Send a message here, or reach me directly on any of these.
             </p>
           </div>
 
-          <dl className="border-line border-t">
-            {CONTACT_ROWS.map((row) => (
-              <div
-                key={row.label}
-                className="border-line flex flex-col gap-1 border-b py-5 sm:flex-row sm:items-baseline sm:gap-8"
-              >
-                <dt className="mono-label text-ink-subtle w-32 shrink-0">
-                  {row.label}
-                </dt>
-                <dd className="min-w-0 text-lg">
-                  {row.href ? (
-                    <a
-                      href={row.href}
-                      target={row.external ? "_blank" : undefined}
-                      rel={row.external ? "noreferrer noopener" : undefined}
-                      className="text-ink hover:text-ink-muted underline underline-offset-4 transition-colors"
-                    >
-                      {row.value}
-                    </a>
-                  ) : (
-                    <span className="text-ink-muted">{row.value}</span>
-                  )}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <div className="min-w-0">
+            <ContactForm />
+
+            <dl className="border-line mt-16 border-t">
+              {CONTACT_ROWS.map((row) => (
+                <div
+                  key={row.label}
+                  className="border-line flex flex-col gap-1 border-b py-5 sm:flex-row sm:items-baseline sm:gap-8"
+                >
+                  <dt className="mono-label text-ink-subtle w-32 shrink-0">
+                    {row.label}
+                  </dt>
+                  <dd className="min-w-0 text-lg">
+                    {row.href ? (
+                      <a
+                        href={row.href}
+                        target={row.external ? "_blank" : undefined}
+                        rel={row.external ? "noreferrer noopener" : undefined}
+                        className="text-ink hover:text-ink-muted underline underline-offset-4 transition-colors"
+                      >
+                        {row.value}
+                      </a>
+                    ) : (
+                      <span className="text-ink-muted">{row.value}</span>
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         </div>
       </section>
     </>

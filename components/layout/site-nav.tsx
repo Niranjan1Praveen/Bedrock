@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { profile } from "@/content/profile";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -11,6 +10,7 @@ const NAV = [
   // and the Menu is then the only way to reach them.
   { href: "/#selected-work", label: "Projects" },
   { href: "/#capabilities", label: "About me" },
+  { href: "/#contact", label: "Contact me" },
   { href: "/blog", label: "Blog" },
   { href: "/tracks/sql-50", label: "SQL 50" },
   { href: "/tracks", label: "All tracks" },
@@ -108,14 +108,6 @@ export function SiteNav() {
                 {item.label}
               </Link>
             ))}
-
-            <a
-              href={`mailto:${profile.links.email}`}
-              onClick={() => setOpen(false)}
-              className="text-ink-subtle hover:bg-surface-2 hover:text-ink block rounded-lg px-3 py-2.5 font-mono text-[0.8125rem] font-medium tracking-[0.14em] uppercase transition-colors"
-            >
-              Contact me
-            </a>
 
             {signedIn && (
               <>

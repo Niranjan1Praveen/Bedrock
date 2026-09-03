@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
-import { profile } from "@/content/profile";
 import { SiteNav } from "./site-nav";
 
 /**
@@ -16,6 +15,7 @@ import { SiteNav } from "./site-nav";
 const CENTRE = [
   { href: "/#selected-work", label: "Projects" },
   { href: "/#capabilities", label: "About me" },
+  { href: "/#contact", label: "Contact me" },
 ];
 
 // `rounded` rather than `rounded-full`, to match the Menu button beside them.
@@ -81,20 +81,10 @@ export function SiteHeader() {
             without pulling the links off centre. */}
         <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-3 md:flex">
           {CENTRE.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={centreLinkClass}
-            >
+            <Link key={item.href} href={item.href} className={centreLinkClass}>
               {item.label}
             </Link>
           ))}
-          <a
-            href={`mailto:${profile.links.email}`}
-            className={centreLinkClass}
-          >
-            Contact me
-          </a>
         </nav>
 
         <SiteNav />
