@@ -79,9 +79,19 @@ export default async function HomePage() {
           {/* Sized off the viewport so it fills the width at any size, and
               capped so it stays two lines rather than one very long one.
               Heavier than the site's 400-weight headings, which is too light
-              to hold together at this size. */}
+              to hold together at this size.
+
+              w-min rather than a block spanning the full max-width: width:
+              fit-content (w-fit) only shrinks below an element's own unwrapped
+              width, which here is one very long line, so it resolved straight
+              back to max-width, leaving dead space to the right of the
+              shorter word that nothing was ever drawn in -- which the physics
+              balls, which collide with the real rendered box, read as a wall.
+              width: min-content forces every word onto its own line and sizes
+              the box to the widest one, which is what actually hugs the two
+              lines here. */}
           <h1
-            className="mt-8 max-w-[7em] text-[clamp(3.75rem,12vw,11rem)] leading-[0.86] font-medium"
+            className="mt-8 w-min max-w-[7em] text-[clamp(3.75rem,12vw,11rem)] leading-[0.86] font-medium"
           >
             {profile.name}
           </h1>

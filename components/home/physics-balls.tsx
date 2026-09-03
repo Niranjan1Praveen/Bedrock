@@ -36,18 +36,21 @@ type Vec = { x: number; y: number };
 /**
  * A handful of white balls loose on the page (see BALL_COUNT).
  *
- * They drop in from the top right, deflect off whatever is actually on screen
- * -- the nav, the name, the ribbon, the capability rows -- and keep falling
- * through the gaps between things until they reach the foot of the document.
- * Only a ball flung clear of the page is dropped in again.
+ * They drop in from random points across the top of the page, deflect off
+ * whatever is actually on screen -- the nav, the name, the ribbon, the
+ * capability rows -- and keep falling through the gaps between things until
+ * they reach the foot of the document. Only a ball flung clear of the page is
+ * dropped in again.
  *
- * Two things make this work without marking up a single section:
+ * Two things make this work without marking up more than one element:
  *
  * Colliders are read from the live layout of ordinary elements (see
  * CANDIDATES and SOLID), keeping only the outermost object or innermost line
  * of text at each spot so cards and text act as ledges rather than one
  * section-sized slab. They are rebuilt as the page scrolls, and only for what
  * is near the viewport, so a long document costs no more than a short one.
+ * The hero's project ribbon is the one exception, and is handled as its clip
+ * box rather than its cards -- see rebuildStatics.
  *
  * The canvas is fixed and viewport-sized while the simulation runs in document
  * coordinates, drawing offset by the scroll position. A canvas actually spanning
@@ -135,6 +138,9 @@ export function PhysicsBalls() {
         const found: Element[] = [];
 
         for (const el of document.querySelectorAll(CANDIDATES)) {
+          // The ribbon's cards are skipped here and its clip box added below
+          // instead -- see the note there.
+          if (el.closest("[data-ribbon-track]")) continue;
           const r = el.getBoundingClientRect();
           if (r.width < 24 || r.height < 6) continue;
           const y = r.top + window.scrollY;
@@ -169,6 +175,30 @@ export function PhysicsBalls() {
           if (statics.length >= MAX_COLLIDERS) break;
         }
 
+        // The ribbon, as its own clip box rather than its cards. The cards
+        // run far past that box on both sides -- only a couple are ever
+        // within it -- and being clipped makes them invisible, not absent, so
+        // colliding with the cards themselves put solid ground under stretches
+        // of empty page. The box is also the one part of the ribbon that does
+        // not move: the track inside it transforms, the box does not, so this
+        // needs no per-frame correction. Nothing is lost by treating the band
+        // as solid, since a ball is wider than the gaps between cards.
+        const ribbon = document.querySelector("[data-ribbon-track]");
+        if (ribbon) {
+          const r = ribbon.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) {
+            statics.push(
+              Bodies.rectangle(
+                r.left + window.scrollX + r.width / 2,
+                r.top + window.scrollY + r.height / 2,
+                r.width,
+                r.height,
+                { isStatic: true, restitution: 0.55, friction: 0.35 },
+              ),
+            );
+          }
+        }
+
         // The foot of the document, so a ball can come to rest at the very end
         // of the page rather than falling out of the world.
         statics.push(
@@ -184,16 +214,25 @@ export function PhysicsBalls() {
 
       const balls: Matter.Body[] = [];
 
+      /**
+       * Spread across the full width rather than funnelled from one corner,
+       * so some land on the name, some past it, some in the middle. Above the
+       * top of the page by a staggered amount so simultaneous balls do not
+       * fall in a single flat line.
+       */
       const spawnPoint = (): Vec => ({
-        // Top right, above the page, so each ball falls into frame.
-        x: viewW * 0.7 + Math.random() * (viewW * 0.22),
-        y: -60 - Math.random() * 80,
+        x: BALL_RADIUS + Math.random() * (viewW - BALL_RADIUS * 2),
+        y: -60 - Math.random() * 240,
+      });
+
+      const spawnVelocity = (): Vec => ({
+        x: (Math.random() - 0.5) * 3,
+        y: 1 + Math.random(),
       });
 
       const launch = (ball: Matter.Body) => {
-        const p = spawnPoint();
-        Body.setPosition(ball, p);
-        Body.setVelocity(ball, { x: -1 - Math.random() * 1.5, y: 2 });
+        Body.setPosition(ball, spawnPoint());
+        Body.setVelocity(ball, spawnVelocity());
         Body.setAngularVelocity(ball, 0);
       };
 
@@ -205,7 +244,7 @@ export function PhysicsBalls() {
           frictionAir: 0.004,
           density: 0.0016,
         });
-        Body.setVelocity(ball, { x: -1 - Math.random() * 1.5, y: 2 });
+        Body.setVelocity(ball, spawnVelocity());
         balls.push(ball);
         Composite.add(engine.world, ball);
       };

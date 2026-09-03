@@ -130,6 +130,11 @@ export function HeroSlider({ projects }: { projects: Project[] }) {
   return (
     <div className="min-w-0">
       <div
+        // Marks this out for components/home/physics-balls.tsx: everything
+        // inside moves under its own transform every frame, which the
+        // physics layer's periodic collider rebuild cannot track, so it
+        // syncs these continuously instead of scanning for them generically.
+        data-ribbon-track
         // touch-pan-y so a vertical swipe still scrolls the page on a phone
         // while a horizontal one scrubs the ribbon.
         className="cursor-grab touch-pan-y overflow-hidden select-none active:cursor-grabbing"
