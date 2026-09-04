@@ -35,14 +35,17 @@ import { MonoLabel } from "@/components/ui/mono-label";
  *
  * The two upper seats clear the hub horizontally, so their height is free.
  * The lower one sits directly beneath it and is the only one that can collide,
- * so it is measured down from the centre -- the hub's own radius (5rem at its
- * largest) plus a gap -- rather than given a percentage that stops clearing it
- * the moment the stage changes height.
+ * so it is measured down from the centre rather than given a percentage that
+ * stops clearing the hub the moment the stage changes height.
+ *
+ * 11rem is the hub's own radius (5rem at its largest) plus a 6rem gap. The gap
+ * is what the arrow is drawn in: at 1.5rem it had barely a dozen pixels left
+ * after both end trims and rendered as a stub arrowhead.
  */
 const SEATS = [
   { left: "2%", top: "0%" },
   { left: "72%", top: "0%" },
-  { left: "37%", top: "calc(50% + 6.5rem)" },
+  { left: "37%", top: "calc(50% + 11rem)" },
 ] as const;
 
 /** Card width, as a share of the stage. */
@@ -239,7 +242,7 @@ export function Happiness({ sites }: { sites: HappinessSite[] }) {
       {/* md and up: the constellation. */}
       <div
         ref={stageRef}
-        className="relative hidden h-[46rem] md:block"
+        className="relative hidden h-[54rem] md:block"
       >
         <svg
           className="pointer-events-none absolute inset-0 h-full w-full"
@@ -288,7 +291,7 @@ export function Happiness({ sites }: { sites: HappinessSite[] }) {
           <img
             src="/happiness/ehf.webp"
             alt="Ellipsis of Happiness Foundation"
-            className="size-full object-cover"
+            className="size-full object-cover select-none"
           />
         </div>
 
