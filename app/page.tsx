@@ -188,7 +188,7 @@ export default async function HomePage() {
           Three sites for the Ellipsis of Happiness Foundation
         </h2>
         <p className="text-ink-muted mt-5 max-w-xl leading-relaxed">
-          A non-profit, its peer-reviewed journal and its annual event. I built
+          A non-profit, its peer-reviewed journal and its annual event. I helped build
           and shipped all three.
         </p>
 
