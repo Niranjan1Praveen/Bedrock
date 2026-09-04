@@ -22,6 +22,24 @@ export async function generateMetadata({
   return {
     title: project.name,
     description: project.summary,
+    openGraph: {
+      title: project.name,
+      description: project.summary,
+      type: "article",
+      // Conditional, so a project without a poster falls back to the site's
+      // own defaults rather than emitting a URL that resolves to nothing.
+      images: project.image
+        ? [
+            {
+              url: project.image,
+              width: 2400,
+              height: 1350,
+              alt: `${project.name} — ${project.subtitle}`,
+            },
+          ]
+        : undefined,
+    },
+    twitter: { card: "summary_large_image" },
   };
 }
 

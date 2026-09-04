@@ -21,13 +21,14 @@ export interface Project {
   live?: string;
   /** Separate repositories that make up the rest of the system. */
   related?: { name: string; repo: string }[];
-  /** Real screenshot, once one exists. Falls back to generated art. */
+  /** Screenshot of the running project. Falls back to generated art. */
   image?: string;
 }
 
 export const projects: Project[] = [
   {
     slug: "dropconnect",
+    image: "/projects/dropconnect.webp",
     name: "DropConnect",
     subtitle: "Water resilience platform",
     award: "Winner, Xylem Global Student Innovation Challenge",
@@ -55,6 +56,7 @@ export const projects: Project[] = [
   },
   {
     slug: "exoplanetarium",
+    image: "/projects/exoplanetarium.webp",
     name: "Exoplanetarium",
     subtitle: "Exoplanet discovery and analysis",
     award: "2nd Runner-Up, NASA Space Apps Challenge, Noida",
@@ -82,6 +84,7 @@ export const projects: Project[] = [
   },
   {
     slug: "adversanet",
+    image: "/projects/adversanet.webp",
     name: "AdversaNet",
     subtitle: "Adversarial robustness testing",
     year: "2025",
@@ -100,6 +103,7 @@ export const projects: Project[] = [
   },
   {
     slug: "echowithin",
+    image: "/projects/echowithin.webp",
     name: "EchoWithin",
     subtitle: "Voice application with emotion analysis",
     year: "2025",
@@ -118,6 +122,7 @@ export const projects: Project[] = [
   },
   {
     slug: "vahaanbandhu",
+    image: "/projects/vahaanbandhu.webp",
     name: "VahaanBandhu",
     subtitle: "Rural transport and logistics",
     award: "Top 10, Microsoft Azure Community Agritech Hackathon",
@@ -136,20 +141,8 @@ export const projects: Project[] = [
     ],
   },
   {
-    slug: "mediscribe",
-    name: "MediScribe",
-    subtitle: "Clinical documentation from speech",
-    award: "Cyfuture AI Hackathon 1.0",
-    year: "2025",
-    summary:
-      "Turns a spoken consultation into a structured clinical note using speech recognition and language models.",
-    role: "Frontend and integration, in a team of five.",
-    stack: ["Next.js", "Python", "NLP"],
-    repo: "https://github.com/Niranjan1Praveen/MediScribe-Cyfuture-1.0",
-    live: "https://medi-scribe-pi.vercel.app",
-  },
-  {
     slug: "mediconnect",
+    image: "/projects/mediconnect.webp",
     name: "MediConnect",
     subtitle: "Telehealth for rural clinics",
     award: "Top 50, Hack4Health by Horiba, IIIT Delhi",
@@ -163,6 +156,7 @@ export const projects: Project[] = [
   },
   {
     slug: "industrial-wastewater-dashboard",
+    image: "/projects/industrymatrix.webp",
     name: "Industrial Wastewater Dashboard",
     subtitle: "Effluent monitoring",
     year: "2025",

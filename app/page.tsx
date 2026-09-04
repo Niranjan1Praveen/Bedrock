@@ -7,10 +7,12 @@ import { SmoothScroll } from "@/components/home/smooth-scroll";
 import { HeroSlider } from "@/components/home/hero-slider";
 import { PhysicsBalls } from "@/components/home/physics-balls";
 import { Capabilities } from "@/components/home/capabilities";
+import { Happiness } from "@/components/home/happiness";
 import { ContactForm } from "@/components/home/contact-form";
 import { SelectedWork } from "@/components/home/selected-work";
 import { LeetCodeStats } from "@/components/home/leetcode-stats";
 import { projects } from "@/content/projects";
+import { happinessSites } from "@/content/happiness";
 import { capabilities, profile } from "@/content/profile";
 import { getProblem, getProblems, getTracks } from "@/lib/content";
 import { formatDate, getLatestPosts, type PostWithTags } from "@/lib/posts";
@@ -174,6 +176,24 @@ export default async function HomePage() {
 
         <div className="mt-8">
           <SelectedWork projects={projects} />
+        </div>
+      </section>
+
+      {/* Happiness. Cards rather than the numbered list above, because these
+          three are one body of work for one organisation rather than more
+          entries in that sequence. */}
+      <section id="happiness" className="px-6 py-16 sm:px-10 sm:py-20">
+        <MonoLabel>Happiness</MonoLabel>
+        <h2 className="mt-4 max-w-2xl text-2xl sm:text-3xl">
+          Three sites for the Ellipsis of Happiness Foundation
+        </h2>
+        <p className="text-ink-muted mt-5 max-w-xl leading-relaxed">
+          A non-profit, its peer-reviewed journal and its annual event. I built
+          and shipped all three.
+        </p>
+
+        <div className="mt-10">
+          <Happiness sites={happinessSites} />
         </div>
       </section>
 
