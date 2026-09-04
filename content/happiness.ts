@@ -16,7 +16,6 @@ export interface HappinessSite {
   name: string;
   /** What it does. Plain, no selling. */
   summary: string;
-  stack: string[];
   live: string;
   /** Shown as the link label, and it is the site's identity. */
   host: string;
@@ -28,7 +27,6 @@ export const happinessSites: HappinessSite[] = [
     name: "Ellipsis of Happiness",
     summary:
       "The organisation's own site. A Section 8 non-profit in Ghaziabad working on wellbeing through education, playfulness and community.",
-    stack: ["Next.js", "Vercel"],
     live: "https://www.ellipsishappiness.org/",
     host: "ellipsishappiness.org",
   },
@@ -37,7 +35,6 @@ export const happinessSites: HappinessSite[] = [
     name: "IJHHF",
     summary:
       "The International Journal of Happiness and Human Flourishing: an interdisciplinary, peer-reviewed, open-access journal for research in the field.",
-    stack: ["Next.js", "Vercel"],
     live: "https://ijhhf.ellipsishappiness.org/",
     host: "ijhhf.ellipsishappiness.org",
   },
@@ -46,7 +43,6 @@ export const happinessSites: HappinessSite[] = [
     name: "Mr.&MissHappiness",
     summary:
       "The foundation's annual event, a non-competitive happiness pageant open to entrants across all age groups.",
-    stack: ["Next.js", "Vercel"],
     live: "https://www.mrandmisshappiness.in/",
     host: "mrandmisshappiness.in",
   },
