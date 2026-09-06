@@ -5,7 +5,9 @@ import { Container } from "@/components/ui/container";
 import { MonoLabel } from "@/components/ui/mono-label";
 import { Pill } from "@/components/ui/pill";
 import { ProjectArt } from "@/components/home/project-art";
+import { ProjectGallery } from "@/components/projects/project-gallery";
 import { projects } from "@/content/projects";
+import { getGallery } from "@/content/project-gallery";
 
 /** Static content, no database -- every project is prerendered at build. */
 export function generateStaticParams() {
@@ -49,6 +51,9 @@ export default async function ProjectPage({
   const { slug } = await params;
   const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
+
+  // Only four projects have one so far; the rest render nothing.
+  const gallery = getGallery(slug);
 
   return (
     <Container className="py-12 sm:py-16">
@@ -145,6 +150,8 @@ export default async function ProjectPage({
           )}
         </div>
       </div>
+
+      <ProjectGallery images={gallery} />
 
       <footer className="border-line mt-16 border-t pt-8">
         <Link
