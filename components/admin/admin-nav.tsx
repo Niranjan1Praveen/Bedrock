@@ -25,7 +25,9 @@ export function AdminNav() {
     tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
 
   return (
-    <nav className="flex flex-wrap items-center gap-x-5 gap-y-2">
+    // No wrapping: this sits inside the bar's horizontal scroller, which
+    // cannot do its job if the tabs stack instead of running off the edge.
+    <nav className="flex items-center gap-x-5">
       {TABS.map((tab) => {
         const active = isActive(tab);
         return (
@@ -33,10 +35,8 @@ export function AdminNav() {
             key={tab.href}
             href={tab.href}
             aria-current={active ? "page" : undefined}
-            className={`mono-label transition-colors ${
-              active
-                ? "text-ink"
-                : "text-ink-subtle hover:text-ink-muted"
+            className={`mono-label shrink-0 whitespace-nowrap transition-colors ${
+              active ? "text-ink" : "text-ink-subtle hover:text-ink-muted"
             }`}
           >
             {tab.label}
