@@ -64,6 +64,19 @@ export async function getDocument(id: string) {
   });
 }
 
+/** Everything a topic's "Download all" needs: its documents and their paths. */
+export async function getTopicForDownload(id: string) {
+  return prisma.topic.findUnique({
+    where: { id },
+    include: { subject: true, documents: true },
+  });
+}
+
+/** The name a document downloads as: its title, with the real extension. */
+export function documentFileName(title: string, storagePath: string) {
+  return `${title}${storagePath.slice(storagePath.lastIndexOf("."))}`;
+}
+
 /** Everything the upload form needs to offer existing subjects and topics. */
 export async function getLibraryTree() {
   return prisma.subject.findMany({

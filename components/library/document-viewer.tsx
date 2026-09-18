@@ -2,6 +2,7 @@ import { PdfViewer } from "@/components/library/pdf-viewer";
 import { DocxViewer } from "@/components/library/docx-viewer";
 import { PptxViewer } from "@/components/library/pptx-viewer";
 import { kindOf } from "@/lib/file-types";
+import { documentFileName } from "@/lib/library";
 
 /**
  * Picks a renderer for a document.
@@ -27,8 +28,8 @@ export function DocumentViewer({
   revised: boolean;
 }) {
   const kind = kindOf(mimeType, storagePath);
-  // Used only for the Content-Disposition name on a fallback download.
-  const fileName = `${title}${storagePath.slice(storagePath.lastIndexOf("."))}`;
+  // Used for the Content-Disposition name whenever this document downloads.
+  const fileName = documentFileName(title, storagePath);
 
   if (kind === "docx") {
     return (

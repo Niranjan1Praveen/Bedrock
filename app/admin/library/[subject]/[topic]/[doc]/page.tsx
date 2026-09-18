@@ -5,7 +5,8 @@ import { Container } from "@/components/ui/container";
 import { prisma } from "@/lib/prisma";
 import { DocumentViewer } from "@/components/library/document-viewer";
 import { DeleteDocumentButton } from "@/components/library/delete-document-button";
-import { formatBytes, isRevised } from "@/lib/library";
+import { DownloadDocumentButton } from "@/components/library/download-document-button";
+import { documentFileName, formatBytes, isRevised } from "@/lib/library";
 import { getUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -67,11 +68,18 @@ export default async function DocumentPage({
             {formatBytes(found.sizeBytes)}
           </p>
         </div>
-        <DeleteDocumentButton
-          id={found.id}
-          title={found.title}
-          backTo={`/admin/library/${found.topic.subject.slug}`}
-        />
+        <div className="flex shrink-0 items-center gap-4">
+          <DownloadDocumentButton
+            documentId={found.id}
+            fileName={documentFileName(found.title, found.storagePath)}
+          />
+          <span className="bg-line h-4 w-px" aria-hidden />
+          <DeleteDocumentButton
+            id={found.id}
+            title={found.title}
+            backTo={`/admin/library/${found.topic.subject.slug}`}
+          />
+        </div>
       </div>
 
       {/* The viewer fetches its own signed URL client-side, so the link is

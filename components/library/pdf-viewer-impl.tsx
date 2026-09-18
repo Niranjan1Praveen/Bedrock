@@ -12,8 +12,11 @@ import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import { RevisedToggle } from "@/components/library/revised-toggle";
 import {
+  ExpandToggle,
   RenderFallback,
   ScrollTopButton,
+  ViewerFrame,
+  useFullscreenViewer,
   useSignedUrl,
 } from "@/components/library/viewer-parts";
 
@@ -73,6 +76,7 @@ export function PdfViewerImpl({
   revised: boolean;
 }) {
   const { url, error, retry } = useSignedUrl(documentId);
+  const { fullscreen, setFullscreen, shellEl, setShellEl } = useFullscreenViewer();
 
   const [pages, setPages] = useState(initialPageCount ?? 0);
   // Bumped once per successful load, unconditionally -- see the effect below
@@ -228,8 +232,12 @@ export function PdfViewerImpl({
   }
 
   return (
-    <div>
-      <div className="border-line bg-surface-2 sticky top-14 z-20 flex flex-wrap items-center justify-between gap-3 rounded-t-xl border px-4 py-2.5">
+    <ViewerFrame setShellEl={setShellEl} fullscreen={fullscreen}>
+      <div
+        className={`border-line bg-surface-2 sticky z-20 flex flex-wrap items-center justify-between gap-3 rounded-t-xl border px-4 py-2.5 ${
+          fullscreen ? "top-0" : "top-14"
+        }`}
+      >
         <span className="mono-label text-ink-subtle tabular-nums">
           {pages ? `Page ${current} of ${pages}` : "Loading"}
         </span>
@@ -237,7 +245,9 @@ export function PdfViewerImpl({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            onClick={() =>
+              (fullscreen ? shellEl : window)?.scrollTo({ top: 0, behavior: "smooth" })
+            }
             className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
           >
             Top
@@ -279,6 +289,8 @@ export function PdfViewerImpl({
           >
             +
           </button>
+          <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
+          <ExpandToggle fullscreen={fullscreen} onToggle={() => setFullscreen((f) => !f)} />
         </div>
       </div>
 
@@ -376,7 +388,7 @@ export function PdfViewerImpl({
         <RevisedToggle documentId={documentId} revised={revised} size="md" />
       </div>
 
-      <ScrollTopButton />
-    </div>
+      <ScrollTopButton scrollTarget={fullscreen ? shellEl : undefined} />
+    </ViewerFrame>
   );
 }

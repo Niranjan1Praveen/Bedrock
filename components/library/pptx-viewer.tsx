@@ -2,9 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  ExpandToggle,
   RenderFallback,
   ScrollTopButton,
+  ViewerFrame,
   ViewerToolbar,
+  useFullscreenViewer,
   useSignedUrl,
 } from "@/components/library/viewer-parts";
 import { RevisedToggle } from "@/components/library/revised-toggle";
@@ -33,6 +36,7 @@ export function PptxViewer({
   revised: boolean;
 }) {
   const { url, error, retry } = useSignedUrl(documentId);
+  const { fullscreen, setFullscreen, shellEl, setShellEl } = useFullscreenViewer();
   const container = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
   const [message, setMessage] = useState("");
@@ -101,10 +105,13 @@ export function PptxViewer({
   }
 
   return (
-    <div>
+    <ViewerFrame setShellEl={setShellEl} fullscreen={fullscreen}>
       <ViewerToolbar
         status={state === "ready" ? "Slides" : state === "failed" ? "Could not render" : "Loading"}
-      />
+        scrollTarget={fullscreen ? shellEl : undefined}
+      >
+        <ExpandToggle fullscreen={fullscreen} onToggle={() => setFullscreen((f) => !f)} />
+      </ViewerToolbar>
 
       <div className="border-line bg-surface scroll-x rounded-b-xl border border-t-0 p-3 sm:p-5">
         {state === "failed" && (
@@ -131,7 +138,7 @@ export function PptxViewer({
         <RevisedToggle documentId={documentId} revised={revised} size="md" />
       </div>
 
-      <ScrollTopButton />
-    </div>
+      <ScrollTopButton scrollTarget={fullscreen ? shellEl : undefined} />
+    </ViewerFrame>
   );
 }

@@ -82,12 +82,24 @@ export function TopicSection({
               <MonoLabel>
                 {count} file{count === 1 ? "" : "s"}
               </MonoLabel>
-              {/* Marking a whole unit at once, rather than tapping forty rows. */}
-              <RevisedToggle
-                topicId={topic.id}
-                revised={complete}
-                label="Mark all"
-              />
+              <div className="flex items-center gap-3">
+                {/* Same-origin, so the browser sends the session cookie on
+                    its own -- this needs no client component. The server
+                    streams a zip with Content-Disposition: attachment, so the
+                    browser saves it without leaving the page. */}
+                <a
+                  href={`/api/library/topics/${topic.id}/download`}
+                  className="mono-label text-ink-subtle hover:text-ink transition-colors"
+                >
+                  Download all
+                </a>
+                {/* Marking a whole unit at once, rather than tapping forty rows. */}
+                <RevisedToggle
+                  topicId={topic.id}
+                  revised={complete}
+                  label="Mark all"
+                />
+              </div>
             </div>
           )}
 
