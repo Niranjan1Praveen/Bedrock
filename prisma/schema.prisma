@@ -165,3 +165,76 @@ model DocumentProgress {
   @@index([userId])
   @@index([documentId])
 }
+
+/// Personal notes, organised title -> entry -> attachment.
+///
+/// Unrelated to the library above and to the blog: nothing here references
+/// them, and they reference nothing here. Each row belongs to one account and
+/// is only ever read or written through that account's id.
+///
+/// userId is an auth.users id and deliberately not a foreign key, for the same
+/// reason as DocumentProgress.userId: auth lives in Supabase's own schema.
+model NoteTopic {
+  id       String @id @default(cuid())
+  userId   String
+  /// Unique per account, not globally: two people can each have "Interviews".
+  slug     String
+  title    String
+  position Int    @default(0)
+
+  entries   NoteEntry[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@unique([userId, slug])
+  @@index([userId, position])
+}
+
+model NoteEntry {
+  id     String @id @default(cuid())
+  /// Repeated from the topic so every query can filter on it directly.
+  userId String
+  slug   String
+  title  String
+  /// Plain text. Links and images are attachments, not markup in here.
+  body   String @default("")
+  position Int  @default(0)
+
+  topicId String
+  topic   NoteTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  attachments NoteAttachment[]
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([topicId, slug])
+  @@index([topicId, position])
+  @@index([userId])
+}
+
+/// A link or an image on an entry. Images live in the private `notes` bucket
+/// and are never public: the row keeps only the object path, and a short-lived
+/// signed URL is minted server-side for each view.
+model NoteAttachment {
+  id     String @id @default(cuid())
+  userId String
+  /// "link" or "image".
+  kind   String
+  /// What to show for it. Defaults to the address or the file name.
+  label  String
+  /// Set for links.
+  url    String?
+  /// Set for images: the object key inside the `notes` bucket.
+  storagePath String? @unique
+  mimeType    String?
+  sizeBytes   Int?
+  position    Int     @default(0)
+
+  entryId String
+  entry   NoteEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([entryId, position])
+  @@index([userId])
+}

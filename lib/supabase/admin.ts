@@ -22,5 +22,8 @@ export function createAdminClient() {
 
 export const LIBRARY_BUCKET = "library";
 
+/** Images pasted into notes. Private, like the library, and kept separate from it. */
+export const NOTES_BUCKET = "notes";
+
 /** How long a view link stays good for. Long enough to read, short enough that a copied URL dies. */
 export const SIGNED_URL_TTL_SECONDS = 60 * 60;
