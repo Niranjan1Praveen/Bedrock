@@ -170,7 +170,10 @@ export function ViewerToolbar({
       }`}
     >
       <span className="mono-label text-ink-subtle tabular-nums">{status}</span>
-      <div className="flex items-center gap-1">
+      {/* Wraps rather than running off the edge: with paging and zoom the
+          controls come to ~400px, wider than a phone. min-w-0 lets this
+          shrink inside the flex parent instead of holding its full width. */}
+      <div className="flex min-w-0 flex-wrap items-center justify-end gap-1">
         <button
           type="button"
           onClick={() => (scrollTarget ?? window).scrollTo({ top: 0, behavior: "smooth" })}
@@ -180,13 +183,23 @@ export function ViewerToolbar({
         </button>
         {children && (
           <>
-            <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
+            <ToolbarDivider />
             {children}
           </>
         )}
       </div>
     </div>
   );
+}
+
+/**
+ * A rule between groups of toolbar controls.
+ *
+ * Hidden below sm: once the row wraps, a divider lands at the end of a line
+ * or the start of the next and reads as a stray mark, not a separator.
+ */
+export function ToolbarDivider() {
+  return <span className="bg-line mx-1.5 hidden h-4 w-px sm:block" aria-hidden />;
 }
 
 /**

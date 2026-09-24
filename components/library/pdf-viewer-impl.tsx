@@ -15,7 +15,9 @@ import {
   ExpandToggle,
   RenderFallback,
   ScrollTopButton,
+  ToolbarDivider,
   ViewerFrame,
+  ViewerToolbar,
   useFullscreenViewer,
   useSignedUrl,
 } from "@/components/library/viewer-parts";
@@ -233,66 +235,49 @@ export function PdfViewerImpl({
 
   return (
     <ViewerFrame setShellEl={setShellEl} fullscreen={fullscreen}>
-      <div
-        className={`border-line bg-surface-2 sticky z-20 flex flex-wrap items-center justify-between gap-3 rounded-t-xl border px-4 py-2.5 ${
-          fullscreen ? "top-0" : "top-14"
-        }`}
+      <ViewerToolbar
+        status={pages ? `Page ${current} of ${pages}` : "Loading"}
+        scrollTarget={fullscreen ? shellEl : undefined}
       >
-        <span className="mono-label text-ink-subtle tabular-nums">
-          {pages ? `Page ${current} of ${pages}` : "Loading"}
+        <button
+          type="button"
+          onClick={() => jump(current - 1)}
+          disabled={current <= 1}
+          className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors disabled:opacity-30"
+        >
+          Prev
+        </button>
+        <button
+          type="button"
+          onClick={() => jump(current + 1)}
+          disabled={!pages || current >= pages}
+          className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors disabled:opacity-30"
+        >
+          Next
+        </button>
+        <ToolbarDivider />
+        <button
+          type="button"
+          onClick={() => setScale((s) => Math.max(0.6, Math.round((s - 0.2) * 10) / 10))}
+          className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
+          aria-label="Zoom out"
+        >
+          &minus;
+        </button>
+        <span className="mono-label text-ink-subtle w-12 text-center tabular-nums">
+          {Math.round(scale * 100)}%
         </span>
-
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() =>
-              (fullscreen ? shellEl : window)?.scrollTo({ top: 0, behavior: "smooth" })
-            }
-            className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
-          >
-            Top
-          </button>
-          <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
-          <button
-            type="button"
-            onClick={() => jump(current - 1)}
-            disabled={current <= 1}
-            className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors disabled:opacity-30"
-          >
-            Prev
-          </button>
-          <button
-            type="button"
-            onClick={() => jump(current + 1)}
-            disabled={!pages || current >= pages}
-            className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors disabled:opacity-30"
-          >
-            Next
-          </button>
-          <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
-          <button
-            type="button"
-            onClick={() => setScale((s) => Math.max(0.6, Math.round((s - 0.2) * 10) / 10))}
-            className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
-            aria-label="Zoom out"
-          >
-            &minus;
-          </button>
-          <span className="mono-label text-ink-subtle w-12 text-center tabular-nums">
-            {Math.round(scale * 100)}%
-          </span>
-          <button
-            type="button"
-            onClick={() => setScale((s) => Math.min(2.5, Math.round((s + 0.2) * 10) / 10))}
-            className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
-            aria-label="Zoom in"
-          >
-            +
-          </button>
-          <span className="bg-line mx-1.5 h-4 w-px" aria-hidden />
-          <ExpandToggle fullscreen={fullscreen} onToggle={() => setFullscreen((f) => !f)} />
-        </div>
-      </div>
+        <button
+          type="button"
+          onClick={() => setScale((s) => Math.min(2.5, Math.round((s + 0.2) * 10) / 10))}
+          className="mono-label text-ink-subtle hover:bg-surface hover:text-ink rounded px-2.5 py-1.5 transition-colors"
+          aria-label="Zoom in"
+        >
+          +
+        </button>
+        <ToolbarDivider />
+        <ExpandToggle fullscreen={fullscreen} onToggle={() => setFullscreen((f) => !f)} />
+      </ViewerToolbar>
 
       <div
         ref={frame}
